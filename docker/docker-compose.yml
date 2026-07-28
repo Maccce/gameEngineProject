@@ -1,0 +1,16 @@
+services:
+  engine-build:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+
+    volumes:
+      - ..:/workspace
+
+    working_dir: /workspace
+
+    command: sleep infinity
+
+    environment:
+      VCPKG_ROOT: /opt/vcpkg
+      VCPKG_DEFAULT_TRIPLET: x64-linux
