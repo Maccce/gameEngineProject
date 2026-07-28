@@ -7,6 +7,7 @@ target_sources(engine
     core/Engine.cpp
     core/Application.cpp
     core/Time.cpp
+    core/Log.cpp
 )
 
 
@@ -23,5 +24,13 @@ target_compile_features(engine
     cxx_std_20
 )
 
+
+target_link_libraries(engine
+
+    PUBLIC
+
+    spdlog::spdlog
+
+)
 
 enable_engine_warnings(engine)
