@@ -30,6 +30,10 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
 include(cmake/CompilerWarnings.cmake)
 
 
+# Dependencies
+
+include(cmake/Dependencies.cmake)
+
 # Engine
 
 add_subdirectory(engine)

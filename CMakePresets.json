@@ -1,0 +1,9 @@
+{
+    "configurePresets": [
+        {
+            "name": "docker-linux",
+            "generator": "Ninja",
+            "toolchainFile": "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        }
+    ]
+}

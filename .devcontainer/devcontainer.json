@@ -1,0 +1,28 @@
+{
+    "name": "gameEngineProject Development",
+
+    "dockerComposeFile": [
+        "../docker/docker-compose.yml"
+    ],
+
+    "service": "engine-build",
+
+    "workspaceFolder": "/workspace",
+
+    "remoteUser": "ubuntu",
+
+    "updateRemoteUserUID": true,
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "vadimcn.vscode-lldb",
+                "twxs.cmake"
+            ]
+        }
+    },
+
+    "postCreateCommand": "cmake --version && ninja --version && ${containerEnv:VCPKG_ROOT}/vcpkg version"
+}

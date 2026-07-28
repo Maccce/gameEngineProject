@@ -1,0 +1,9 @@
+{
+    "name": "gameengineproject",
+    "version-string": "0.1.0",
+    "dependencies": [
+        "spdlog",
+        "sdl3",
+        "entt"
+    ]
+}
