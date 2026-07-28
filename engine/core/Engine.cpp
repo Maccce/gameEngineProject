@@ -1,6 +1,6 @@
 #include "Engine.hpp"
 
-#include <iostream>
+#include "Log.hpp"
 
 
 namespace Engine
@@ -13,7 +13,7 @@ EngineCore::EngineCore()
 
 void EngineCore::initialize()
 {
-    std::cout << "Engine initialized\n";
+    Log::info("Engine initialized");
 
     running = true;
 }
@@ -21,7 +21,7 @@ void EngineCore::initialize()
 
 void EngineCore::shutdown()
 {
-    std::cout << "Engine shutdown\n";
+    Log::info("Engine shutdown");
 
     running = false;
 }
