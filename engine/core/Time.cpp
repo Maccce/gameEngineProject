@@ -10,9 +10,9 @@ std::chrono::high_resolution_clock::time_point Time::startTime;
 std::chrono::high_resolution_clock::time_point Time::lastFrame;
 
 
-float Time::delta = 0.0f;
+float Time::deltaSeconds = 0.0f;
 
-float Time::total = 0.0f;
+float Time::totalSeconds = 0.0f;
 
 
 
@@ -32,13 +32,13 @@ void Time::update()
         std::chrono::high_resolution_clock::now();
 
 
-    delta =
+    deltaSeconds =
         std::chrono::duration<float>(
             current - lastFrame
         ).count();
 
 
-    total =
+    totalSeconds =
         std::chrono::duration<float>(
             current - startTime
         ).count();
@@ -51,14 +51,14 @@ void Time::update()
 
 float Time::deltaTime()
 {
-    return delta;
+    return deltaSeconds;
 }
 
 
 
 float Time::totalTime()
 {
-    return total;
+    return totalSeconds;
 }
 
 

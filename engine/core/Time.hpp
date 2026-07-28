@@ -26,9 +26,10 @@ private:
 
     static std::chrono::high_resolution_clock::time_point lastFrame;
 
-    static float delta;
 
-    static float total;
+    static float deltaSeconds;
+
+    static float totalSeconds;
 };
 
 }
