@@ -18,6 +18,12 @@ public:
 
 private:
 
+    bool running = true;
+
+
+    void update();
+
+
     EngineCore engine;
 
 };

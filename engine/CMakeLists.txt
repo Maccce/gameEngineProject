@@ -6,6 +6,7 @@ target_sources(engine
 
     core/Engine.cpp
     core/Application.cpp
+    core/Time.cpp
 )
 
 
