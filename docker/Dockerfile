@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     openssh-client \
     ca-certificates \
+    bash-completion \
     && rm -rf /var/lib/apt/lists/*
 
 # Ubuntu 24.04 image already contains ubuntu user,
@@ -35,6 +36,10 @@ RUN id ubuntu >/dev/null 2>&1 || \
 # Ensure home directory ownership
 RUN mkdir -p /home/ubuntu \
     && chown -R ubuntu:ubuntu /home/ubuntu
+
+# Configure bash completion
+RUN echo "source /usr/share/bash-completion/bash_completion" >> /home/ubuntu/.bashrc \
+    && chown ubuntu:ubuntu /home/ubuntu/.bashrc
 
 # Switch to non-root user
 USER ubuntu
