@@ -1,177 +1,328 @@
 # gameEngineProject
 
-A custom C++20 2D game engine project built from the ground up with a focus on modular architecture, open-source dependencies, and long-term maintainability.
+A custom C++20 2D game engine built from the ground up with a focus on modular architecture, reusable engine systems, modern C++ practices, and reproducible development environments.
 
-The goal is to create a reusable game engine foundation that can support:
+The goal is to create a reusable engine foundation capable of supporting:
 
-* 2D games
-* editor tooling
-* scripting
-* asset pipelines
-* cross-platform builds
+- 2D games
+- editor tooling
+- asset pipelines
+- scripting
+- cross-platform builds
 
-The project is designed to run on:
+The project uses a Docker-based development environment to provide consistent builds across machines.
 
-* Windows 11
-* Linux
-* WSL2 development environments
-* Docker-based CI builds
+Supported development environments:
 
----
+- Windows 11 + WSL2
+- Linux
+- Docker-based CI environments
 
-# Project Goals
+## Project Goals
 
 The engine is designed around these principles:
 
-* **Modular architecture**
-  Engine systems should be independent and replaceable.
+### Modular architecture
 
-* **Separation between engine and games**
-  Games should use the engine without being tightly coupled to its implementation.
+Engine systems are separated into independent modules that can evolve without tightly coupling the entire codebase.
 
-* **Modern C++ practices**
-  The project uses C++20 and modern build tooling.
+### Separation between engine and games
 
-* **Open-source friendly foundation**
-  Dependencies are chosen with commercial and open-source usage in mind.
+Games should use the engine as a reusable foundation rather than containing engine-specific implementation.
 
-* **Reproducible builds**
-  Development and CI environments should produce consistent results.
+### Modern C++ practices
 
----
+The project uses:
 
-# Architecture Overview
+- C++20
+- CMake
+- Ninja
+- vcpkg
 
-The repository is organized into several major components:
+### Reproducible builds
+
+The development environment is containerized so developers and CI systems use the same dependencies.
+
+## Repository Structure
 
 ```
 gameEngineProject/
-
-├── engine/        Core engine library
-├── runtime/       Game runtime executable
-├── editor/        Engine editor tools
-├── tools/         Asset and development tools
-├── projects/      Games using the engine
-├── assets/        Game and engine assets
-├── shaders/       GPU shaders
-├── tests/         Automated tests
-├── docs/          Documentation
-└── cmake/         Build configuration
+├── engine/ Core engine library
+├── runtime/ Runtime executable
+├── editor/ Engine editor tools
+├── projects/ Games and applications using the engine
+├── assets/ Engine and game assets
+├── shaders/ GPU shader programs
+├── tools/ Development and asset pipeline tools
+├── tests/ Automated tests
+├── scripts/ Development scripts
+├── cmake/ CMake modules and configuration
+├── docker/ Docker configuration
+├── .devcontainer/ VS Code Dev Container configuration
+├── docs/ Documentation
+└── .github/ GitHub Actions workflows
 ```
 
----
+## Engine Architecture
 
-# Engine Architecture
-
-The intended runtime structure:
+The engine is split into independent systems:
 
 ```
-Game
-
- |
-
- v
-
-Runtime
-
- |
-
- v
-
-Engine Core
-
- +----------------+
- |                |
- v                v
-
- ECS          Renderer
-
- Physics      Audio
-
- Input        Scripting
-
- Assets       Editor
+engine/
+├── animation/ Animation systems
+├── audio/ Audio systems
+├── core/ Core engine functionality
+├── debugging/ Debugging and diagnostics
+├── ecs/ Entity Component System
+├── events/ Event handling
+├── hotreload/ Hot reload support
+├── jobs/ Job/task system
+├── networking/ Networking systems
+├── physics/ Physics systems
+├── platform/ Platform abstraction
+├── reflection/ Reflection and metadata
+├── renderer/ Rendering systems
+├── resources/ Resource management
+└── scripting/ Scripting integration
 ```
 
-The engine is built as a reusable library. The runtime layer provides the executable entry point.
+The engine is designed as a reusable library.
 
----
+Individual games should depend on the engine rather than containing engine-specific code.
 
-# Current Status
+## Runtime
 
-The project is currently in the foundation stage.
+The runtime provides the executable entry point.
 
-Completed:
-
-* Repository architecture
-* CMake build system
-* C++20 configuration
-* Engine static library
-* Runtime executable
-* Initial application lifecycle
-
-Current test:
+Architecture:
 
 ```
-Engine initialized
-Engine shutdown
+Game Project
+  |
+  v
+Runtime Executable
+  |
+  v
+Engine Library
 ```
 
-Planned systems:
+The runtime is responsible for:
 
-* SDL3 window management
-* Input system
-* Game loop
-* bgfx rendering backend
-* EnTT ECS integration
-* Asset management
-* Dear ImGui editor
-* Python scripting
-* Hot reload system
-* Physics integration
+- Starting the engine
+- Managing application lifetime
+- Loading projects
+- Running the game loop
 
----
+## Editor
 
-# Build Requirements
+The editor contains engine development tools.
 
-## Linux / WSL2
+Current structure:
 
-Required:
+```
+editor/
+├── gizmos/
+├── panels/
+└── windows/
+```
 
-* CMake
-* Ninja
-* C++20 compiler
-* Git
+Planned functionality:
 
-Example Ubuntu installation:
+- Scene editing
+- Entity inspection
+- Asset management
+- Debug tooling
+
+## Tools
+
+Development tools are located in:
+
+```
+tools/
+├── asset_cooker/
+├── project_generator/
+└── shader_compiler/
+```
+
+These tools support:
+
+- Asset processing
+- Project creation
+- Shader workflows
+
+## Assets
+
+Assets are separated into source and processed data:
+
+```
+assets/
+
+├── raw/
+└── cooked/
+```
+
+
+The goal is to keep source assets separate from runtime-ready assets.
+
+## Development Environment
+
+The project uses a Docker-based development environment through Visual Studio Code Dev Containers.
+
+The container provides:
+
+- Ubuntu 24.04
+- GCC compiler toolchain
+- CMake
+- Ninja
+- Python
+- vcpkg
+- Required build dependencies
+
+The same container image is used for:
+
+- Local development through VS Code Dev Containers
+- Automated CI builds
+
+No local C++ compiler, CMake, Ninja, or vcpkg installation is required.
+
+## Requirements
+
+Install on the host machine:
+
+- Docker
+- Docker Compose
+- Visual Studio Code
+- Dev Containers extension
+- Git
+- GitHub SSH key (for repository access)
+- SSH agent configured on the host machine
+
+## Opening the Development Container
+
+All build commands should be executed inside the container terminal.
+
+1. Start the GitHub SSH agent inside a terminal outside VS Code.
+
+2. Open the repository in VS Code in the same terminal.
+
+3. Click `Ctrl` + `Shift` + `P` inside VS Code.
+
+4. Dev Containers: Rebuild and Reopen in Container
+
+## GitHub SSH Setup
+
+The development container uses SSH agent forwarding.
+
+The SSH private key remains on the host machine and is never copied into the container.
+
+The container only receives access to the running SSH agent socket.
+
+### SSH agent
+
+On the host machine:
+
+1. Create an SSH key if needed:
+
+    ```bash
+    ssh-keygen -t ed25519 -C "your-email@example.com"
+    ```
+
+2. Start the SSH agent:
+
+    ```bash
+    eval "$(ssh-agent -s)"
+    ```
+
+3. Add your key:
+
+    ```bash
+    ssh-add ~/.ssh/id_ed25519
+    ```
+
+4. Verify:
+    ```bash
+    ssh-add -l
+    ```
+
+5. Copy your public key (Only needed to do this first time):
+
+    ```
+    GitHub → Settings → SSH and GPG keys
+    ```
+
+6. Test:
+
+    ```bash
+    ssh -T git@github.com
+    ```
+
+    Expected:
+    ```bash
+    Hi <username>! You've successfully authenticated, but GitHub does not provide shell access.
+    ```
+
+### Using Git inside the container
+
+After opening the Dev Container:
+
+Test authentication:
 
 ```bash
-sudo apt update
-
-sudo apt install \
-    cmake \
-    ninja-build \
-    build-essential \
-    git
+ssh -T git@github.com
 ```
 
----
+Then use Git normally.
 
-# Building
+## Verify Development Environment
 
-Configure:
+Inside the Dev Container terminal:
+
+Check compiler:
 
 ```bash
-cmake -S . -B build -G Ninja
+g++ --version
 ```
 
-Build:
+Check CMake:
+
+```bash
+cmake --version
+```
+
+Check Ninja:
+
+```bash
+ninja --version
+```
+
+```bash
+$VCPKG_ROOT/vcpkg version
+```
+
+Check GitHub authentication:
+
+```bash
+ssh -T git@github.com
+```
+
+## Building
+
+All commands are run inside the container.
+
+### Configure
+
+```bash
+cmake -S . -B build -G Ninja \
+    -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+```
+
+### Build
 
 ```bash
 cmake --build build
 ```
 
-Run:
+### Run
 
 ```bash
 ./build/bin/gameRuntime
@@ -179,138 +330,82 @@ Run:
 
 Expected output:
 
-```
-Engine initialized
-Engine shutdown
-```
+```bash
+[info] Engine initialized
 
----
+Frame delta: ...
 
-# Development Dependencies
-
-The project uses external libraries managed through CMake and vcpkg.
-
-Planned dependencies include:
-
-* SDL3 - windowing and input
-* bgfx - rendering abstraction
-* EnTT - entity component system
-* pybind11 - Python integration
-* Box2D - 2D physics
-* Dear ImGui - editor interface
-
----
-
-# Directory Guidelines
-
-## engine/
-
-Contains reusable engine code.
-
-Examples:
-
-* rendering
-* ECS
-* physics
-* audio
-* scripting
-* resource management
-
-The engine should not depend on any specific game.
-
----
-
-## runtime/
-
-Contains the executable layer.
-
-Responsible for:
-
-* starting the engine
-* loading a project
-* running the game loop
-
----
-
-## projects/
-
-Contains games or applications built using the engine.
-
-Example:
-
-```
-projects/
-
-└── ExampleGame/
-
-    ├── src/
-    ├── scripts/
-    └── assets/
+[info] Engine shutdown
 ```
 
----
+## Dependencies
 
-# Build Files
+Dependencies are managed through vcpkg.
 
-Generated files should not be committed.
+Current and planned dependencies include:
 
-Ignored:
+- SDL3 - windowing and input
+- bgfx - rendering abstraction
+- EnTT - entity component system
+- pybind11 - Python integration
+- Box2D - physics
+- Dear ImGui - editor interface
 
-```
-build/
-CMakeCache.txt
-CMakeFiles/
-*.exe
-*.dll
-*.o
-```
+## Current Status
 
-Source files and build configuration belong in Git.
+Completed:
 
----
+- Repository architecture
+- Docker development environment
+- VS Code Dev Container setup
+- CMake build system
+- C++20 configuration
+- Engine static library
+- Runtime executable
+- vcpkg integration
+- Modular engine layout
+- Editor structure
+- Tool structure
+- Test structure
 
-# License
+## Roadmap
+
+### Core Engine
+- [ ] Main game loop
+- [ ] Time system
+- [ ] Logging improvements
+- [ ] Event system
+- [ ] Input handling
+
+### Rendering
+
+- [ ] SDL3 integration
+- [ ] bgfx integration
+- [ ] Sprite rendering
+- [ ] Camera system
+
+### Gameplay Systems
+
+- [ ] ECS integration
+- [ ] Scene system
+- [ ] Physics
+- [ ] Animation
+
+### Editor
+
+- [ ] Scene editor
+- [ ] Asset browser
+- [ ] Entity inspector
+- [ ] Debug visualization
+
+### Tools
+
+- [ ] Improved asset pipeline
+- [ ] Hot reload workflow
+- [ ] Packaging tools
+
+## License
 
 This project license has not yet been finalized.
 
 Third-party dependencies retain their respective licenses.
-
----
-
-# Roadmap
-
-## Foundation
-
-* [x] Repository structure
-* [x] CMake setup
-* [x] Engine library
-* [x] Runtime executable
-
-## Core Engine
-
-* [ ] Main game loop
-* [ ] Time system
-* [ ] Logging
-* [ ] Event system
-* [ ] Input handling
-
-## Rendering
-
-* [ ] SDL3 integration
-* [ ] bgfx integration
-* [ ] Sprite rendering
-* [ ] Camera system
-
-## Gameplay
-
-* [ ] ECS integration
-* [ ] Scene system
-* [ ] Physics
-* [ ] Animation
-
-## Tools
-
-* [ ] Editor
-* [ ] Asset pipeline
-* [ ] Hot reload
-* [ ] Packaging tools

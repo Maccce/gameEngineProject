@@ -12,5 +12,8 @@ services:
     command: sleep infinity
 
     environment:
-      VCPKG_ROOT: /opt/vcpkg
+      VCPKG_ROOT: /home/ubuntu/vcpkg
       VCPKG_DEFAULT_TRIPLET: x64-linux
+
+    security_opt:
+      - no-new-privileges:true

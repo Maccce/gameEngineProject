@@ -11,7 +11,15 @@
 
     "remoteUser": "ubuntu",
 
-    "updateRemoteUserUID": true,
+    "mounts": [
+        "source=${localEnv:HOME}/.ssh/agent.sock,target=/tmp/ssh-agent,type=bind"
+    ],
+
+    "remoteEnv": {
+        "SSH_AUTH_SOCK": "/tmp/ssh-agent",
+        "GIT_SSH_COMMAND": "ssh",
+        "VCPKG_ROOT": "/home/ubuntu/vcpkg"
+    },
 
     "customizations": {
         "vscode": {
