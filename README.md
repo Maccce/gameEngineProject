@@ -1,168 +1,190 @@
 # gameEngineProject
 
-A custom C++20 2D game engine project built from the ground up with a focus on modular architecture, open-source dependencies, and long-term maintainability.
+A custom C++20 2D game engine built from the ground up with a focus on modular architecture, modern tooling, and long-term maintainability.
 
-The goal is to create a reusable game engine foundation that can support:
+The goal is to create a reusable engine foundation capable of supporting:
 
 * 2D games
-* editor tooling
-* scripting
-* asset pipelines
-* cross-platform builds
+* Editor tooling
+* Asset pipelines
+* Scripting
+* Cross-platform development
 
-The project is designed to run on:
+The project is designed to support development on:
 
 * Windows 11
 * Linux
-* WSL2 development environments
+* WSL2
+* Docker Dev Containers
 * Docker-based CI builds
 
 ---
 
 # Project Goals
 
-The engine is designed around these principles:
+The engine is designed around several core principles.
 
-* **Modular architecture**
-  Engine systems should be independent and replaceable.
+### Modular architecture
 
-* **Separation between engine and games**
-  Games should use the engine without being tightly coupled to its implementation.
+Engine systems should be independent, reusable, and replaceable.
 
-* **Modern C++ practices**
-  The project uses C++20 and modern build tooling.
+### Separation of engine and game code
 
-* **Open-source friendly foundation**
-  Dependencies are chosen with commercial and open-source usage in mind.
+Games should depend on the engine without coupling to its implementation.
 
-* **Reproducible builds**
-  Development and CI environments should produce consistent results.
+### Modern C++
+
+The project uses C++20 together with modern CMake practices.
+
+### Open-source ecosystem
+
+Dependencies are managed through **vcpkg** and chosen with commercial and open-source licensing in mind.
+
+### Reproducible development
+
+Every developer works in the same Docker-based environment to eliminate "works on my machine" problems.
 
 ---
 
-# Architecture Overview
+# Repository Structure
 
-The repository is organized into several major components:
-
-```
+```text
 gameEngineProject/
 
-├── engine/        Core engine library
-├── runtime/       Game runtime executable
-├── editor/        Engine editor tools
-├── tools/         Asset and development tools
-├── projects/      Games using the engine
-├── assets/        Game and engine assets
-├── shaders/       GPU shaders
-├── tests/         Automated tests
-├── docs/          Documentation
-└── cmake/         Build configuration
+├── assets/          Engine and game assets
+├── cmake/           CMake helper files
+├── docker/          Docker development environment
+├── docs/            Documentation
+├── editor/          Editor application
+├── engine/          Engine library
+├── projects/        Games using the engine
+├── runtime/         Runtime executable
+├── shaders/         GPU shaders
+├── tests/           Automated tests
+├── CMakeLists.txt
+└── vcpkg.json
 ```
 
 ---
 
-# Engine Architecture
+# Architecture
 
-The intended runtime structure:
-
-```
+```text
 Game
 
- |
+ │
 
- v
+ ▼
 
 Runtime
 
- |
+ │
 
- v
+ ▼
 
 Engine Core
 
- +----------------+
- |                |
- v                v
-
- ECS          Renderer
-
- Physics      Audio
-
- Input        Scripting
-
- Assets       Editor
+ ├── ECS
+ ├── Rendering
+ ├── Input
+ ├── Audio
+ ├── Physics
+ ├── Assets
+ ├── Scripting
+ └── Editor
 ```
 
-The engine is built as a reusable library. The runtime layer provides the executable entry point.
+The engine is built as a reusable static library while the runtime provides the executable entry point.
 
 ---
 
 # Current Status
 
-The project is currently in the foundation stage.
-
 Completed:
 
-* Repository architecture
+* Repository structure
 * CMake build system
-* C++20 configuration
+* Docker development environment
+* vcpkg dependency management
 * Engine static library
 * Runtime executable
-* Initial application lifecycle
+* Logging
+* Basic engine lifecycle
 
-Current test:
+Current output:
 
-```
+```text
 Engine initialized
+Frame delta: ...
 Engine shutdown
 ```
 
 Planned systems:
 
 * SDL3 window management
+* bgfx renderer
+* EnTT ECS
 * Input system
-* Game loop
-* bgfx rendering backend
-* EnTT ECS integration
 * Asset management
 * Dear ImGui editor
 * Python scripting
-* Hot reload system
+* Hot reload
 * Physics integration
 
 ---
 
-# Build Requirements
+# Development Environment
 
-## Linux / WSL2
+Development is performed inside a Docker Dev Container.
 
-Required:
+The container includes:
 
+* GCC
 * CMake
 * Ninja
-* C++20 compiler
 * Git
+* Python
+* vcpkg
+* All required build tools
 
-Example Ubuntu installation:
+This provides a reproducible environment across Windows, Linux, and WSL2.
+
+---
+
+# Getting Started
+
+## Prerequisites
+
+Install:
+
+* Docker Desktop (Windows) or Docker Engine (Linux)
+* Visual Studio Code
+* Dev Containers extension
+
+Clone the repository:
 
 ```bash
-sudo apt update
-
-sudo apt install \
-    cmake \
-    ninja-build \
-    build-essential \
-    git
+git clone <repository-url>
+cd gameEngineProject
 ```
+
+Open the repository in VS Code and select:
+
+**Dev Containers: Reopen in Container**
+
+The development container will be built automatically.
 
 ---
 
 # Building
 
+Inside the Dev Container:
+
 Configure:
 
 ```bash
-cmake -S . -B build -G Ninja
+cmake -S . -B build -G Ninja \
+    -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
 ```
 
 Build:
@@ -177,103 +199,96 @@ Run:
 ./build/bin/gameRuntime
 ```
 
-Expected output:
+---
 
-```
-Engine initialized
-Engine shutdown
-```
+# Dependencies
+
+Dependencies are managed through **vcpkg** in manifest mode.
+
+Current and planned libraries include:
+
+* SDL3
+* bgfx
+* EnTT
+* spdlog
+* Dear ImGui
+* pybind11
+* Box2D
+
+No manual dependency installation is required inside the development container.
 
 ---
 
-# Development Dependencies
-
-The project uses external libraries managed through CMake and vcpkg.
-
-Planned dependencies include:
-
-* SDL3 - windowing and input
-* bgfx - rendering abstraction
-* EnTT - entity component system
-* pybind11 - Python integration
-* Box2D - 2D physics
-* Dear ImGui - editor interface
-
----
-
-# Directory Guidelines
+# Project Layout
 
 ## engine/
 
-Contains reusable engine code.
+Reusable engine functionality.
 
 Examples:
 
-* rendering
+* Rendering
 * ECS
-* physics
-* audio
-* scripting
-* resource management
-
-The engine should not depend on any specific game.
+* Audio
+* Physics
+* Resource management
+* Scripting
 
 ---
 
 ## runtime/
 
-Contains the executable layer.
+Application entry point.
 
 Responsible for:
 
-* starting the engine
-* loading a project
-* running the game loop
+* Engine startup
+* Project loading
+* Main loop
+
+---
+
+## editor/
+
+Future editor application.
+
+Planned features:
+
+* Scene editing
+* Asset browser
+* Inspector
+* Debug tools
 
 ---
 
 ## projects/
 
-Contains games or applications built using the engine.
+Games built using the engine.
 
 Example:
 
-```
+```text
 projects/
 
 └── ExampleGame/
-
-    ├── src/
+    ├── assets/
     ├── scripts/
-    └── assets/
+    └── src/
 ```
 
 ---
 
-# Build Files
+# Generated Files
 
-Generated files should not be committed.
+Generated files should never be committed.
 
-Ignored:
+Examples:
 
-```
+```text
 build/
 CMakeCache.txt
 CMakeFiles/
-*.exe
-*.dll
-*.o
 ```
-
-Source files and build configuration belong in Git.
-
----
-
-# License
-
-This project license has not yet been finalized.
-
-Third-party dependencies retain their respective licenses.
 
 ---
 
@@ -282,28 +297,29 @@ Third-party dependencies retain their respective licenses.
 ## Foundation
 
 * [x] Repository structure
-* [x] CMake setup
+* [x] CMake build system
+* [x] Docker development environment
+* [x] vcpkg integration
 * [x] Engine library
 * [x] Runtime executable
 
 ## Core Engine
 
-* [ ] Main game loop
+* [ ] Main loop
 * [ ] Time system
-* [ ] Logging
 * [ ] Event system
 * [ ] Input handling
 
 ## Rendering
 
-* [ ] SDL3 integration
-* [ ] bgfx integration
-* [ ] Sprite rendering
+* [ ] SDL3
+* [ ] bgfx
+* [ ] Sprite renderer
 * [ ] Camera system
 
 ## Gameplay
 
-* [ ] ECS integration
+* [ ] ECS
 * [ ] Scene system
 * [ ] Physics
 * [ ] Animation
@@ -313,4 +329,12 @@ Third-party dependencies retain their respective licenses.
 * [ ] Editor
 * [ ] Asset pipeline
 * [ ] Hot reload
-* [ ] Packaging tools
+* [ ] Packaging
+
+---
+
+# License
+
+License selection is still pending.
+
+Third-party libraries remain under their respective licenses.
