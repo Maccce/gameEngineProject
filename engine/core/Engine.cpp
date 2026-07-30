@@ -26,4 +26,9 @@ void EngineCore::shutdown()
     running = false;
 }
 
+bool EngineCore::isRunning() const
+{
+    return running;
+}
+
 }
