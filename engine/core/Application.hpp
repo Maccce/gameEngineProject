@@ -15,6 +15,8 @@ public:
 
     int run();
 
+    void stop();
+
 
 private:
 
