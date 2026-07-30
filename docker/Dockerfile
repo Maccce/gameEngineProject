@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     autoconf-archive \
     automake \
     libtool \
+    libltdl-dev \
     openssh-client \
     ca-certificates \
     bash-completion \

@@ -32,5 +32,5 @@
         }
     },
 
-    "postCreateCommand": "cmake --version && ninja --version && ${containerEnv:VCPKG_ROOT}/vcpkg version"
+    "postCreateCommand": "cmake --version && ninja --version && $VCPKG_ROOT/vcpkg version"
 }
