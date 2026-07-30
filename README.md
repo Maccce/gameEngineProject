@@ -18,6 +18,12 @@ Supported development environments:
 - Linux
 - Docker-based CI environments
 
+Detailed architecture documentation:
+
+```
+docs/architecture.md
+```
+
 ## Project Goals
 
 The engine is designed around these principles:
@@ -26,9 +32,9 @@ The engine is designed around these principles:
 
 Engine systems are separated into independent modules that can evolve without tightly coupling the entire codebase.
 
-### Separation between engine and games
+### Separation between engine and projects
 
-Games should use the engine as a reusable foundation rather than containing engine-specific implementation.
+Projects use the engine as a reusable foundation rather than containing engine-specific implementation.
 
 ### Modern C++ practices
 
@@ -45,15 +51,17 @@ The development environment is containerized so developers and CI systems use th
 
 ## Repository Structure
 
-```
+```text
 gameEngineProject/
-├── engine/ Core engine library
-├── runtime/ Runtime executable
-├── editor/ Engine editor tools
+
+├── engine/ Core engine functionality
+├── application/ Application framework and project integration
+├── runtime/ Executable entry point
 ├── projects/ Games and applications using the engine
-├── assets/ Engine and game assets
-├── shaders/ GPU shader programs
+├── editor/ Editor application
 ├── tools/ Development and asset pipeline tools
+├── assets/ Engine and project assets
+├── shaders/ GPU shader programs
 ├── tests/ Automated tests
 ├── scripts/ Development scripts
 ├── cmake/ CMake modules and configuration
@@ -63,55 +71,11 @@ gameEngineProject/
 └── .github/ GitHub Actions workflows
 ```
 
-## Engine Architecture
+For architecture decisions and ownership rules, see:
 
-The engine is split into independent systems:
-
+```text
+docs/architecture.md
 ```
-engine/
-├── animation/ Animation systems
-├── audio/ Audio systems
-├── core/ Core engine functionality
-├── debugging/ Debugging and diagnostics
-├── ecs/ Entity Component System
-├── events/ Event handling
-├── hotreload/ Hot reload support
-├── jobs/ Job/task system
-├── networking/ Networking systems
-├── physics/ Physics systems
-├── platform/ Platform abstraction
-├── reflection/ Reflection and metadata
-├── renderer/ Rendering systems
-├── resources/ Resource management
-└── scripting/ Scripting integration
-```
-
-The engine is designed as a reusable library.
-
-Individual games should depend on the engine rather than containing engine-specific code.
-
-## Runtime
-
-The runtime provides the executable entry point.
-
-Architecture:
-
-```
-Game Project
-  |
-  v
-Runtime Executable
-  |
-  v
-Engine Library
-```
-
-The runtime is responsible for:
-
-- Starting the engine
-- Managing application lifetime
-- Loading projects
-- Running the game loop
 
 ## Editor
 
@@ -119,7 +83,7 @@ The editor contains engine development tools.
 
 Current structure:
 
-```
+```text
 editor/
 ├── gizmos/
 ├── panels/
@@ -137,7 +101,7 @@ Planned functionality:
 
 Development tools are located in:
 
-```
+```text
 tools/
 ├── asset_cooker/
 ├── project_generator/
@@ -154,13 +118,11 @@ These tools support:
 
 Assets are separated into source and processed data:
 
-```
+```text
 assets/
-
 ├── raw/
 └── cooked/
 ```
-
 
 The goal is to keep source assets separate from runtime-ready assets.
 
@@ -194,7 +156,7 @@ Install on the host machine:
 - Visual Studio Code
 - Dev Containers extension
 - Git
-- GitHub SSH key (for repository access)
+- GitHub SSH key
 - SSH agent configured on the host machine
 
 ## Opening the Development Container
@@ -203,11 +165,19 @@ All build commands should be executed inside the container terminal.
 
 1. Start the GitHub SSH agent inside a terminal outside VS Code.
 
-2. Open the repository in VS Code in the same terminal.
+2. Open the repository in VS Code from the same terminal.
 
-3. Click `Ctrl` + `Shift` + `P` inside VS Code.
+3. Open the command palette:
 
-4. Dev Containers: Rebuild and Reopen in Container
+```text
+Ctrl + Shift + P
+```
+
+4. Select:
+
+```text
+Dev Containers: Rebuild and Reopen in Container
+```
 
 ## GitHub SSH Setup
 
@@ -308,6 +278,8 @@ Check Ninja:
 ninja --version
 ```
 
+Check vcpkg:
+
 ```bash
 $VCPKG_ROOT/vcpkg version
 ```
@@ -343,7 +315,7 @@ cmake --build build
 
 Expected output:
 
-```bash
+```text
 [info] Engine initialized
 
 Frame delta: ...
@@ -368,7 +340,7 @@ Current and planned dependencies include:
 
 Completed:
 
-- Repository architecture
+- Initial repository structure
 - Docker development environment
 - VS Code Dev Container setup
 - CMake build system
@@ -383,8 +355,15 @@ Completed:
 
 ## Roadmap
 
+### Application
+
+- [ ] Application lifecycle
+- [ ] Project interface
+- [ ] Project loading
+- [ ] Application loop
+
 ### Core Engine
-- [ ] Main game loop
+
 - [ ] Time system
 - [ ] Logging improvements
 - [ ] Event system

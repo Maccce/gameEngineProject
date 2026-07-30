@@ -10,91 +10,94 @@ Each change should:
 
 - Modify the smallest number of files possible.
 - Have one clear purpose.
-- Be built and tested before starting another change.
+- Build before continuing.
 - Avoid unrelated cleanup or refactoring.
 
-Do not combine architectural changes with feature implementation unless the change requires it.
+Do not combine feature work with architectural changes unless the feature requires it.
 
-## Architecture Stability
+## Architecture
 
-The current architecture should be treated as the baseline.
+The project architecture is documented in:
 
-Do not move responsibilities between layers without first explaining the reason and trade-offs.
+    docs/architecture.md
 
-The current direction is:
+Treat that document as the architectural source of truth.
 
-```text
-runtime
-    |
-    v
-application
-    |
-    v
-engine systems
-```
+The current architecture may be partially implemented.
 
-The goal is to keep the engine reusable while allowing projects to contain their own game logic.
+Do not infer architectural problems from missing features or missing systems.
 
-File Changes
+A system that does not exist yet is not automatically a reason to introduce:
+- new layers,
+- new abstractions,
+- new ownership boundaries,
+- architectural redesigns.
 
-When modifying code:
+Do not propose architectural changes unless:
 
-Always state the file path being changed.
-Explain what problem the change solves.
-Avoid changing many files at once.
-Prefer adding small pieces of functionality over rewriting existing systems.
+- the current implementation creates a concrete limitation,
+- the limitation cannot reasonably be solved within the existing architecture.
 
-Related .hpp and .cpp files may be changed together when they represent the same class.
+When suggesting an architectural change, always explain:
 
-### C++ Style
+- the current limitation,
+- why the limitation exists,
+- why the proposed solution improves the project,
+- the trade-offs involved.
 
-Keep class interfaces and implementations separated.
+Do not move responsibilities between:
+- runtime,
+- application,
+- projects,
+- engine,
+- systems,
 
-Headers should contain declarations.
+without first explaining why the ownership boundary is incorrect.
 
-Source files should contain implementation details.
+## File Changes
 
-Prefer controlled access through functions instead of exposing internal state.
+Before making a change, identify:
 
-Example:
+- the files being modified,
+- the problem being solved,
+- why those files are the correct place for the change.
 
-```c++
-object.stop();
-```
+Avoid changing unrelated files.
 
-is prefered over:
+Related `.hpp` and `.cpp` files may be changed together.
 
-```c++
-object.running = false;
-```
+## C++ Style
 
-### Testing Changes
+Keep declarations in headers.
 
-After each change:
+Keep implementation in source files.
 
-1. Configure if required.
+Prefer encapsulation over exposing mutable state.
+
+Prefer:
+
+    object.stop();
+
+over:
+
+    object.running = false;
+
+## Development Style
+
+Prefer implementing the existing architecture over redesigning it.
+
+Do not add extension points until they are required by the implementation.
+
+Choose the simplest solution that satisfies the current requirement.
+
+Missing functionality should normally be implemented inside the existing ownership boundaries before creating new layers.
+
+## Validation
+
+After each logical change:
+
+1. Configure if necessary.
 2. Build the project.
-3. Run the affected executable if possible.
+3. Run the affected executable when possible.
 
 Do not continue if the previous change does not build.
-
-### Avoid Premature Design Changes
-
-Do not introduce systems, abstractions, or frameworks before they are needed.
-
-The project should grow from working requirements rather than trying to predict the final engine design.
-
-### Current Development Focus
-
-The project is currently building the engine foundation.
-
-Priorities should be:
-
-- Stable engine lifecycle.
-- Core systems.
-- Runtime integration.
-- Rendering foundation.
-- Input handling.
-- Scripting support.
-
-Large architectural redesigns should only happen when a concrete limitation is discovered.
