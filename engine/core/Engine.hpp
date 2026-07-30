@@ -16,6 +16,8 @@ public:
 
     void shutdown();
 
+    bool isRunning() const;
+
 
 private:
 

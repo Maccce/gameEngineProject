@@ -1,11 +1,8 @@
 #include "Application.hpp"
-
 #include "Time.hpp"
 
 #include <iostream>
 #include <thread>
-
-
 
 namespace Engine
 {
@@ -16,17 +13,22 @@ Application::Application()
 
 }
 
-
-
 void Application::update()
 {
     std::cout
         << "Frame delta: "
         << Time::deltaTime()
         << "\n";
+
+    static int frames = 0;
+
+    frames++;
+
+    if(frames > 10)
+    {
+        stop();
+    }
 }
-
-
 
 int Application::run()
 {
@@ -49,16 +51,6 @@ int Application::run()
 
         frames++;
 
-
-        // Temporary exit condition
-        // until SDL provides events
-
-        if(frames > 10)
-        {
-            running = false;
-        }
-
-
         // Prevent max CPU usage
 
         std::this_thread::sleep_for(
@@ -73,5 +65,9 @@ int Application::run()
     return 0;
 }
 
+void Application::stop()
+{
+    running = false;
+}
 
 }
