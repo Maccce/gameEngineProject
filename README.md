@@ -239,18 +239,31 @@ On the host machine:
     ssh-add ~/.ssh/id_ed25519
     ```
 
-4. Verify:
+4. Remove old stale socket:
+
+    ```bash
+    rm -f ~/.ssh/agent.sock
+    ```
+
+5. creates a symbolic link (symlink) from a fixed path to your current SSH agent socket:
+
+    ```bash
+    ln -s $SSH_AUTH_SOCK ~/.ssh/agent.sock
+    ```
+
+6. Verify:
+
     ```bash
     ssh-add -l
     ```
 
-5. Copy your public key (Only needed to do this first time):
+7. Copy your public key (Only needed to do this first time):
 
     ```
     GitHub → Settings → SSH and GPG keys
     ```
 
-6. Test:
+8. Test:
 
     ```bash
     ssh -T git@github.com
