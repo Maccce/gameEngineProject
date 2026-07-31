@@ -352,15 +352,17 @@ Completed:
 - Editor structure
 - Tool structure
 - Test structure
+- Application framework
+- Project interface
+- Example project integration
+- Runtime project loading through GameModule
+- Application-to-project lifecycle flow
 
 ## Roadmap
 
 ### Application
 
-- [ ] Application lifecycle
-- [ ] Project interface
 - [ ] Project loading
-- [ ] Application loop
 
 ### Core Engine
 

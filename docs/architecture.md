@@ -61,6 +61,7 @@ Responsibilities:
 - Start the process.
 - Create the application environment.
 - Start execution.
+- Create the selected project module.
 
 The runtime remains generic.
 
@@ -96,10 +97,11 @@ The application is responsible for lifecycle and coordination layer.
 
 Physical location:
 
+```text
 application/
-
     Application.hpp
     Application.cpp
+```
 
 Responsibilities:
 
@@ -142,23 +144,49 @@ application/
 
 The project interface allows multiple projects to run using the same application framework.
 
+#### Project Module
+
+Projects provide a module entry point used by the runtime to create a project instance.
+
+Relationship:
+
+```text
+Runtime
+    |
+    v
+Project Module
+    |
+    v
+Project Implementation
+    |
+    v
+Project Interface
+```
+
+The project module is responsible for creating the concrete project implementation.
+
+The runtime does not depend on concrete project classes.
+
+The project module belongs to the project/application boundary and is not part of the engine.
+
 #### Project Loader
 
 The project loader is responsible for loading projects into the application.
 
 Physical location:
 
+```text
 application/
-
     ProjectLoader.hpp
     ProjectLoader.cpp
+```
 
 Responsibilities:
 
-Locate projects.
-Load projects.
-Create project instances.
-Provide the project instance to the application.
+- Locate projects.
+- Load projects.
+- Create project instances.
+- Provide the project instance to the application.
 
 Project loading is an application responsibility.
 
@@ -287,6 +315,7 @@ Projects contain:
 Projects:
 
 - implement the project interface.
+- provide project modules.
 - use engine functionality.
 - provide project-specific behaviour.
 
@@ -328,6 +357,8 @@ The architecture consists of two related flows.
 ```text
 Runtime
     |
+    +--> Project Module
+    |
     v
 Application
     |
@@ -338,7 +369,7 @@ Project          Engine
 Interface          |
     ^              v
     |            Systems
-Game Project
+Project Implementation
 ```
 
 ### Project Usage Flow
@@ -359,6 +390,7 @@ The diagrams describe relationships, not ownership hierarchy.
 The important rules are:
 
 - Runtime starts the application.
+- Runtime creates projects through project modules.
 - Application hosts projects.
 - Projects implement the project interface.
 - Projects use the engine.
@@ -371,19 +403,19 @@ Allowed dependencies:
 
 ```text
 Runtime
-    |
-    v
+    -> Application
+    -> Project Module
+
 Application
-    |
-    v
-Engine
+    -> Engine
+    -> Project Interface
 
+Project Module
+    -> Project
 
-Projects
-    |
-    +--> Application Project Interface
-    |
-    +--> Engine
+Project
+    -> Project Interface
+    -> Engine
 ```
 
 The following dependencies are not allowed:
@@ -462,5 +494,6 @@ docs/
 - Runtime remains generic.
 - Application owns the project boundary.
 - Projects connect through the project interface.
+- Projects provide project modules.
 - The engine never depends on projects.
 - Editor functionality remains separate from runtime functionality.
