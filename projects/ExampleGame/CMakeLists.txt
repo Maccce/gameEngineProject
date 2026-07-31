@@ -1,4 +1,4 @@
-add_library(exampleGame)
+add_library(exampleGame SHARED)
 
 target_sources(exampleGame
     PRIVATE

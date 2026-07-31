@@ -1,9 +1,15 @@
+#include "GameModule.hpp"
 #include "Game.hpp"
 
-namespace GameModule
+namespace ExampleGame
 {
-    App::Project* createProject()
+    App::Project* GameModule::createProject()
     {
-        return new ExampleGame::Game();
+        return new Game();
+    }
+
+    void GameModule::destroyProject(App::Project* project)
+    {
+        delete project;
     }
 }

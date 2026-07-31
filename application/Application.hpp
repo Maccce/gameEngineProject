@@ -2,13 +2,16 @@
 
 #include "core/Engine.hpp"
 #include "Project.hpp"
+#include "ProjectLoader.hpp"
+
+#include <memory>
 
 namespace App
 {
     class Application
     {
     public:
-        explicit Application(Project& project);
+        Application();
 
         int run();
 
@@ -24,6 +27,8 @@ namespace App
 
         Engine::EngineCore engine;
 
-        Project& project;
+        ProjectLoader projectLoader;
+
+        std::unique_ptr<Project> project;
     };
 }

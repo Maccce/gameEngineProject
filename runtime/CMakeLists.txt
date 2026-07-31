@@ -9,7 +9,6 @@ target_link_libraries(gameRuntime
     PRIVATE
     engine
     application
-    exampleGame
 )
 
 enable_engine_warnings(gameRuntime)
