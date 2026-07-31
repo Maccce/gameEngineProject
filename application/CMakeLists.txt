@@ -5,6 +5,7 @@ target_sources(application
     Application.cpp
     Project.cpp
     ProjectLoader.cpp
+    ProjectRegistry.cpp
 )
 
 target_include_directories(application
@@ -15,4 +16,5 @@ target_include_directories(application
 target_link_libraries(application
     PRIVATE
     engine
+    nlohmann_json::nlohmann_json
 )
