@@ -9,9 +9,7 @@
 
 namespace App
 {
-    Application::Application(Project& project)
-        :
-        project(project)
+    Application::Application()
     {
     }
 
@@ -39,13 +37,14 @@ namespace App
     {
         engine.initialize();
         Engine::Time::initialize();
-        project.onInitialize();
+        project = projectLoader.load();
+        project->onInitialize();
     }
 
     void Application::update()
     {
         Engine::Time::update();
-        project.onUpdate();
+        project->onUpdate();
         std::cout
             << "Frame delta: "
             << Engine::Time::deltaTime()
@@ -54,7 +53,8 @@ namespace App
 
     void Application::shutdown()
     {
-        project.onShutdown();
+        project->onShutdown();
+        project.reset();
         engine.shutdown();
     }
 

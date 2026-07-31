@@ -55,7 +55,7 @@ The development environment is containerized so developers and CI systems use th
 gameEngineProject/
 
 ├── engine/ Core engine functionality
-├── application/ Application framework and project integration
+├── application/ Application framework, project discovery, and project loading
 ├── runtime/ Executable entry point
 ├── projects/ Games and applications using the engine
 ├── editor/ Editor application
@@ -316,11 +316,20 @@ cmake --build build
 Expected output:
 
 ```text
-[info] Engine initialized
+[info] Logging initialized
 
-Frame delta: ...
+Available Projects
 
-[info] Engine shutdown
+1. Example Game
+   Description: An example game project.
+   Version: 0.1.0
+   Path: projects/ExampleGame
+
+Select project: 1
+
+Selected: Example Game
+
+[info] Logging shutdown
 ```
 
 ## Dependencies
@@ -354,15 +363,21 @@ Completed:
 - Test structure
 - Application framework
 - Project interface
+- Project metadata system
+- Project registry for discovering available projects
+- Project selection workflow
+- Project loader architecture
 - Example project integration
-- Runtime project loading through GameModule
 - Application-to-project lifecycle flow
 
 ## Roadmap
 
 ### Application
 
-- [ ] Project loading
+- [x] Project discovery
+- [x] Project selection
+- [ ] Dynamic project module loading
+- [ ] Runtime project switching
 
 ### Core Engine
 

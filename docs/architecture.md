@@ -27,21 +27,19 @@ runtime/
 
     Starts the executable.
 
-
 application/
 
     Hosts an engine application.
     Defines the project interface.
-
+    Discovers and loads projects.
 
 projects/
 
     Contains games and applications using the engine.
 
-
 engine/
 
-    Provides reusable engine functionality and systems.
+    Provides reusable engine and systems functionality.
 
 editor/
 
@@ -61,7 +59,6 @@ Responsibilities:
 - Start the process.
 - Create the application environment.
 - Start execution.
-- Create the selected project module.
 
 The runtime remains generic.
 
@@ -69,19 +66,25 @@ The runtime does not contain:
 
 - gameplay logic,
 - engine systems,
-- project-specific code.
+- project-specific code,
+- project selection logic,
+- project loading logic.
 
-### Applications
+Project selection and loading are handled by the application layer.
+
+### Application
 
 The application layer provides the framework for running an engine-based application.
 
-It manages the relationship between the runtime, project lifecycle, and engine startup.
+It manages the relationship between runtime, projects, and engine startup.
 
 Responsibilities:
 
 - Manage application lifetime.
 - Coordinate engine startup and shutdown.
 - Own the project interface.
+- Discover available projects.
+- Select a project.
 - Load and run a selected project.
 - Provide the application environment required by projects.
 
@@ -91,67 +94,86 @@ The application layer does not contain:
 - project-specific behaviour,
 - engine system implementations.
 
-#### Application
+#### Project Registry
 
-The application is responsible for lifecycle and coordination layer.
+The project registry is responsible for discovering available projects.
 
 Physical location:
 
 ```text
 application/
-    Application.hpp
-    Application.cpp
+    ProjectRegistry.hpp
+    ProjectRegistry.cpp
+    ProjectInfo.hpp
 ```
 
 Responsibilities:
 
-- Managing the lifetime of an engine-based application.
-- Starting and shutting down the engine.
-- Loading and running a project through the project interface.
-- Coordinating the main application loop.
-- Connecting runtime execution with projects and engine functionality.
+- Search a provided projects directory.
+- Read project metadata.
+- Create project information entries.
+- Provide a list of available projects.
 
-Application does not contain:
+The project registry does not:
 
-- Gameplay logic.
-- Project-specific behaviour.
-- Engine system implementations.
-- Rendering, physics, audio, or ECS functionality.
+- load project modules,
+- create project instances,
+- contain project-specific knowledge.
 
-The Application layer is responsible for hosting a project and coordinating the
-use of the engine, while projects provide application-specific behaviour and
-the engine provides reusable systems.
+Example:
 
-#### Project Interface
+```text
+Available Projects
 
-The project interface defines the contract between the application layer and projects.
+1. Example Game
+   Description: An example game project.
+   Version: 0.1.0
+   Path: projects/ExampleGame
 
-The application layer owns this interface because it defines how a project is hosted and executed.
+2. Another Game
+   Description: An other game project.
+   Version: .0.1.0
+   Path: projects/AnotherGame
+```
 
-Projects implement this interface.
+The application decides which project is selected.
 
-Relationship:
+#### Project Loader
+
+The project loader is responsible for loading a selected project into the application.
+
+Physical location:
 
 ```text
 application/
 
-    Project Interface
-             ^
-             |
-             |
-        Game Project
+    ProjectLoader.hpp
+    ProjectLoader.cpp
 ```
 
-The project interface allows multiple projects to run using the same application framework.
+Responsibilities:
+
+- Receive selected project information.
+- Locate the project module.
+- Load the project module.
+- Create the project instance.
+- Provide the project instance to the application.
+
+Project loading is an application responsibility.
+
+The engine does not know how projects are discovered or loaded.
 
 #### Project Module
 
-Projects provide a module entry point used by the runtime to create a project instance.
+Projects provide a module entry point used to create a project instance.
 
 Relationship:
 
 ```text
-Runtime
+Application
+    |
+    v
+Project Loader
     |
     v
 Project Module
@@ -165,32 +187,9 @@ Project Interface
 
 The project module is responsible for creating the concrete project implementation.
 
-The runtime does not depend on concrete project classes.
+The application does not depend on concrete project classes.
 
 The project module belongs to the project/application boundary and is not part of the engine.
-
-#### Project Loader
-
-The project loader is responsible for loading projects into the application.
-
-Physical location:
-
-```text
-application/
-    ProjectLoader.hpp
-    ProjectLoader.cpp
-```
-
-Responsibilities:
-
-- Locate projects.
-- Load projects.
-- Create project instances.
-- Provide the project instance to the application.
-
-Project loading is an application responsibility.
-
-The engine does not know how projects are discovered or loaded.
 
 ### Engine
 
@@ -210,13 +209,16 @@ The engine contains systems that provide reusable functionality.
 Relationship:
 
 ```text
+Application
+    |
+    v
 Engine
     |
     v
 Systems
 ```
 
-### Engine Modules
+#### Engine Modules
 
 Engine modules are physical code organization.
 
@@ -247,7 +249,7 @@ Modules provide reusable functionality.
 
 A module does not necessarily represent exactly one runtime system.
 
-### Systems
+#### Systems
 
 Systems are the modular building blocks of the engine.
 
@@ -350,14 +352,19 @@ Tools are separate applications.
 
 ## Relationships
 
-The architecture consists of two related flows.
+The architecture uses diagrams with a consistent notation.
 
-### Application Execution Flow
+Diagram rules:
+
+- Arrows (`->`) represent dependency direction.
+- The source depends on the destination.
+- Implementation relationships are shown separately using `implements`.
+- Creation/loading flow is described as a sequence, not as dependency arrows.
+
+### Dependency Relationship
 
 ```text
 Runtime
-    |
-    +--> Project Module
     |
     v
 Application
@@ -365,66 +372,97 @@ Application
     +----------------+
     |                |
     v                v
-Project          Engine
-Interface          |
-    ^              v
-    |            Systems
+Project Loader     Engine
+    |
+    v
+Project Module
+    |
+    v
 Project Implementation
+
+
+Project Implementation
+        |
+        | implements
+        v
+
+Project Interface
 ```
 
-### Project Usage Flow
-
-```text
-Game Project
-    |
-    +--> Project Interface
-    |
-    +--> Engine
-            |
-            v
-          Systems
-```
-
-The diagrams describe relationships, not ownership hierarchy.
-
-The important rules are:
-
-- Runtime starts the application.
-- Runtime creates projects through project modules.
-- Application hosts projects.
-- Projects implement the project interface.
-- Projects use the engine.
-- Engine provides systems.
-- Engine does not depend on projects.
-
-### Dependency Rules
-
-Allowed dependencies:
+The dependency relationships are:
 
 ```text
 Runtime
     -> Application
-    -> Project Module
 
 Application
+    -> Project Loader
     -> Engine
     -> Project Interface
+
+Project Loader
+    -> Project Module
 
 Project Module
-    -> Project
+    -> Project Implementation
 
-Project
-    -> Project Interface
+Project Implementation
     -> Engine
+    -> Project Interface
 ```
 
-The following dependencies are not allowed:
+### Project Loading Flow
 
-- Engine depending on projects.
-- Engine depending on runtime.
-- Engine depending on editor code.
-- Engine depending on tools.
-- Projects modifying engine ownership boundaries.
+The loading sequence is:
+
+```text
+Runtime starts Application
+
+Application
+    |
+    v
+
+Project Registry
+    |
+    v
+
+Available Projects
+
+Application selects a project
+
+Application
+    |
+    v
+
+Project Loader
+    |
+    v
+
+Project Module
+    |
+    v
+
+Project Implementation
+```
+
+The loading flow describes execution order.
+
+It does not represent ownership or dependency direction.
+
+### Project Usage Flow
+
+```text
+Project Implementation
+        |
+        | uses
+        v
+
+Engine
+        |
+        v
+
+Systems
+```
 
 ### Repository Ownership
 
@@ -483,7 +521,13 @@ docs/
     Documentation.
 ```
 
-## Architectural Rules
+### Architectural Rules
+
+Projects use engine functionality.
+
+The engine does not depend on projects.
+
+The important architectural rules are:
 
 - The engine is reusable.
 - Projects are replaceable.
@@ -492,8 +536,12 @@ docs/
 - Systems belong to the engine.
 - Systems provide reusable functionality.
 - Runtime remains generic.
+- Runtime starts the application.
 - Application owns the project boundary.
-- Projects connect through the project interface.
-- Projects provide project modules.
-- The engine never depends on projects.
+- Application defines the project interface.
+- Projects implement the project interface.
+- Application discovers and loads projects.
+- Project modules create project implementations.
+- Projects use engine functionality.
+- Engine never depends on projects.
 - Editor functionality remains separate from runtime functionality.

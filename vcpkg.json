@@ -4,6 +4,7 @@
     "dependencies": [
         "spdlog",
         "sdl3",
-        "entt"
+        "entt",
+        "nlohmann-json"
     ]
 }
