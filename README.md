@@ -1,6 +1,6 @@
 # gameEngineProject
 
-A custom C++20 2D game engine built from the ground up with a focus on modular architecture, reusable engine systems, modern C++ practices, and reproducible development environments.
+A custom C++23 2D game engine built from the ground up with a focus on modular architecture, reusable engine systems, modern C++ practices, and reproducible development environments.
 
 The goal is to create a reusable engine foundation capable of supporting:
 
@@ -353,7 +353,7 @@ Completed:
 - Docker development environment
 - VS Code Dev Container setup
 - CMake build system
-- C++20 configuration
+- C++23 configuration
 - Engine static library
 - Runtime executable
 - vcpkg integration
