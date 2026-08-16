@@ -40,7 +40,7 @@ Projects use the engine as a reusable foundation rather than containing engine-s
 
 The project uses:
 
-- C++20
+- C++23
 - CMake
 - Ninja
 - vcpkg
