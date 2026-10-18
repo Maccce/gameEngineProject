@@ -1,3 +1,4 @@
+
 add_executable(gameRuntime)
 
 target_sources(gameRuntime
@@ -7,7 +8,6 @@ target_sources(gameRuntime
 
 target_link_libraries(gameRuntime
     PRIVATE
-    engine
     application
 )
 

@@ -13,3 +13,11 @@ namespace ExampleGame
         delete project;
     }
 }
+
+extern "C"
+{
+    App::ProjectModule* createProjectModule()
+    {
+        return new ExampleGame::GameModule();
+    }
+}

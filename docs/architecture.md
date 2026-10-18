@@ -1,53 +1,38 @@
 # Engine Architecture
 
-This document defines the architectural structure and ownership boundaries of the engine project.
+This document defines the architecture, responsibilities, dependencies, and ownership boundaries of `gameEngineProject`.
 
-The engine is designed as a reusable foundation that can support multiple games and applications.
+The engine provides reusable functionality. Projects provide application-specific behaviour.
 
 ## Design Goals
 
-The engine should be:
-
-- Reusable across multiple projects.
-- Independent from specific games or applications.
-- Modular.
-- Cross-platform.
-- Suitable for runtime applications, editor tooling, and development tools.
-
-The engine provides reusable functionality.
-
-Projects provide application-specific behaviour.
+- Keep the engine independent from individual projects.
+- Keep runtime startup minimal and generic.
+- Separate application lifecycle management from engine implementation.
+- Support dynamically loaded projects through a common interface.
+- Keep project-specific implementations inside their respective projects.
+- Support runtime applications, editor tooling, and development tools.
 
 ## Architecture Layers
 
-The repository is divided into four main architectural areas:
-
 ```text
 runtime/
-
-    Starts the executable.
+    Generic executable entry point
 
 application/
-
-    Hosts an engine application.
-    Defines the project interface.
-    Discovers and loads projects.
-
-projects/
-
-    Contains games and applications using the engine.
+    Application lifecycle and project management
 
 engine/
+    Reusable engine systems and their lifecycle
 
-    Provides reusable engine and systems functionality.
+projects/
+    Project implementations and project modules
 
 editor/
-
-    Separate application built using the engine.
+    Separate editor application
 
 tools/
-
-    Applications supporting development workflows.
+    Development and asset pipeline tools
 ```
 
 ### Runtime
@@ -55,313 +40,251 @@ tools/
 The runtime is the executable entry point.
 
 Responsibilities:
+- Construct the application.
+- Start the application.
+- Return its exit code.
 
-- Start the process.
-- Create the application environment.
-- Start execution.
-
-The runtime remains generic.
-
-The runtime does not contain:
-
-- gameplay logic,
-- engine systems,
-- project-specific code,
-- project selection logic,
-- project loading logic.
-
-Project selection and loading are handled by the application layer.
+The runtime does not implement engine systems, project discovery, project loading, or gameplay logic. It depends on the application framework rather than on concrete projects.
 
 ### Application
 
-The application layer provides the framework for running an engine-based application.
-
-It manages the relationship between runtime, projects, and engine startup.
+The application framework coordinates the application lifecycle and its interaction with the engine and selected project.
 
 Responsibilities:
+- Start and stop the engine.
+- Define the project interface.
+- Discover and select projects.
+- Load the selected project module.
+- Coordinate project initialization, updates, and shutdown.
+- Ensure the project is destroyed before its module and shared library are released.
 
-- Manage application lifetime.
-- Coordinate engine startup and shutdown.
-- Own the project interface.
-- Discover available projects.
-- Select a project.
-- Load and run a selected project.
-- Provide the application environment required by projects.
+The application contains no concrete project implementation.
 
-The application layer does not contain:
+#### Project Interface
 
-- gameplay rules,
-- project-specific behaviour,
-- engine system implementations.
+`App::Project` is the common interface implemented by projects. It defines lifecycle operations such as initialization, updating, and shutdown.
 
-#### Project Registry
+Projects implement this interface within their own source code.
 
-The project registry is responsible for discovering available projects.
+The application can therefore operate on a project without knowing its concrete class.
 
-Physical location:
+### Project Registry
+
+Location:
 
 ```text
 application/
-    ProjectRegistry.hpp
-    ProjectRegistry.cpp
-    ProjectInfo.hpp
+├── ProjectRegistry.hpp
+├── ProjectRegistry.cpp
+└── ProjectInfo.hpp
 ```
+
+The registry discovers projects in a supplied directory.
 
 Responsibilities:
+- Find project directories containing `project.json`.
+- Read metadata such as name, description, and version.
+- Store project information, including the directory path.
+- Expose the available projects to the application.
 
-- Search a provided projects directory.
-- Read project metadata.
-- Create project information entries.
-- Provide a list of available projects.
+The registry does not load shared libraries or create project instances.
 
-The project registry does not:
+Example metadata:
 
-- load project modules,
-- create project instances,
-- contain project-specific knowledge.
-
-Example:
-
-```text
-Available Projects
-
-1. Example Game
-   Description: An example game project.
-   Version: 0.1.0
-   Path: projects/ExampleGame
-
-2. Another Game
-   Description: An other game project.
-   Version: .0.1.0
-   Path: projects/AnotherGame
+```json
+{
+  "name": "Example Game",
+  "description": "An example game project.",
+  "version": "0.1.0"
+}
 ```
 
-The application decides which project is selected.
+The application uses the resulting project list to present a selection.
 
 #### Project Loader
 
-The project loader is responsible for loading a selected project into the application.
-
-Physical location:
+Location:
 
 ```text
 application/
-
-    ProjectLoader.hpp
-    ProjectLoader.cpp
+├── ProjectLoader.hpp
+├── ProjectLoader.cpp
+├── SharedLibrary.hpp
+└── SharedLibraryLinux.cpp
 ```
 
+The project loader receives the selected `ProjectInfo` and loads the corresponding shared library.
+
 Responsibilities:
+- Resolve the project's library path.
+- Load the shared library.
+- Find the generic `createProjectModule` entry point.
+- Create a project module.
+- Create a project instance through that module.
+- Return an owner that manages the loaded project, module, and library.
 
-- Receive selected project information.
-- Locate the project module.
-- Load the project module.
-- Create the project instance.
-- Provide the project instance to the application.
+The loader uses the project directory name to derive the library name in the current implementation. The current library path convention is `build/lib`.
 
-Project loading is an application responsibility.
-
-The engine does not know how projects are discovered or loaded.
+The platform-specific shared-library implementation is currently Linux-based.
 
 #### Project Module
 
-Projects provide a module entry point used to create a project instance.
+`App::ProjectModule` defines the interface used to create and destroy project instances.
 
-Relationship:
+Each project supplies its own module implementation and exports the entry point:
 
-```text
-Application
-    |
-    v
-Project Loader
-    |
-    v
-Project Module
-    |
-    v
-Project Implementation
-    |
-    v
-Project Interface
+```cpp
+extern "C"
+App::ProjectModule* createProjectModule();
 ```
 
-The project module is responsible for creating the concrete project implementation.
+The entry point has C linkage so the loader can find its symbol by name. The returned interface is still a C++ interface; this design assumes a compatible compiler and C++ ABI between the runtime and project library.
 
-The application does not depend on concrete project classes.
+The module interface includes operations to create and destroy a project:
 
-The project module belongs to the project/application boundary and is not part of the engine.
+```cpp
+virtual Project* createProject() = 0;
+virtual void destroyProject(Project* project) = 0;
+```
+
+The concrete module and project classes remain inside the project. The application does not include their headers or refer to their names.
+
+### Loaded Project Ownership
+
+The loaded-project owner keeps the shared library loaded for as long as the project and module may execute code from it.
+
+Required destruction order:
+
+```text
+Destroy project instance
+        |
+        v
+Destroy project module
+        |
+        v
+Unload shared library
+```
+
+The module destroys the project instance it created. The application must not unload the shared library before these destruction operations complete.
 
 ### Engine
 
-The engine provides reusable functionality.
+The engine provides reusable functionality and does not depend on projects or the application framework.
 
-The engine is independent from:
+Responsibilities:
+- Provide reusable systems.
+- Coordinate engine initialization and shutdown.
+- Expose engine functionality through public interfaces.
 
-- games,
-- projects,
-- runtime applications,
-- editor applications.
+The application starts and stops the engine, but does not implement its systems.
 
-The engine does not know which project is running.
-
-The engine contains systems that provide reusable functionality.
-
-Relationship:
+#### Engine Lifecycle
 
 ```text
 Application
     |
-    v
-Engine
+    +-- Initialize Engine
+    |       |
+    |       v
+    |     Initialize systems
     |
-    v
-Systems
+    +-- Run application and project
+    |
+    +-- Shut down Engine
+            |
+            v
+        Shut down systems
 ```
 
-#### Engine Modules
+The exact systems participating in the lifecycle depend on the engine implementation.
 
-Engine modules are physical code organization.
+#### Engine Modules and Systems
 
-They define where engine functionality is implemented.
+Engine modules describe the organization of engine code. Systems provide reusable areas of functionality. These concepts are related but are not necessarily one-to-one.
 
-Example:
+Potential engine modules include:
 
 ```text
 engine/
-├── animation/
 ├── audio/
 ├── core/
 ├── debugging/
 ├── ecs/
 ├── events/
-├── hotreload/
-├── jobs/
-├── networking/
 ├── physics/
 ├── platform/
-├── reflection/
 ├── renderer/
 ├── resources/
 └── scripting/
 ```
 
-Modules provide reusable functionality.
-
-A module does not necessarily represent exactly one runtime system.
-
-#### Systems
-
-Systems are the modular building blocks of the engine.
-
-Each system provides a specific area of engine functionality.
-
-Examples:
-
-```text
-Engine
-    |
-    +-- Time System
-    |
-    +-- Input System
-    |
-    +-- Renderer System
-    |
-    +-- Physics System
-    |
-    +-- Audio System
-    |
-    +-- ECS Systems
-    |
-    +-- Resource System
-    |
-    +-- Event System
-    |
-    +-- Scripting System
-    |
-    +-- Networking System
-```
+Potential systems include time, input, rendering, physics, audio, resources, events, and ECS functionality. Some of these are planned rather than fully implemented.
 
 Systems:
+- Belong to the engine.
+- Provide reusable functionality.
+- Are independent of specific projects.
+- Are initialized, updated, or shut down according to the engine's lifecycle design.
 
-- belong to the engine.
-- provide reusable functionality.
-- are independent from specific projects.
-- are coordinated by the engine.
-
-Systems do not contain:
-
-- gameplay rules,
-- project-specific behaviour,
-- game-specific objects.
-
-Projects use engine systems through the engine API.
+They do not contain project-specific gameplay rules.
 
 ### Projects
 
-Projects are applications built using the engine.
+Projects are games or other applications built using the engine.
 
-Examples:
+A project owns its:
+- Project-specific behaviour and gameplay.
+- Concrete implementation of `App::Project`.
+- Project module implementation.
+- Project assets and configuration.
+- Project-specific systems and data.
 
-- Games.
-- Simulations.
-- Other engine-based applications.
+Example:
 
-Projects contain:
+```text
+projects/
+└── ExampleGame/
+    ├── project.json
+    ├── CMakeLists.txt
+    └── src/
+        ├── Game.hpp
+        ├── Game.cpp
+        ├── GameModule.hpp
+        └── GameModule.cpp
+```
 
-- Gameplay logic.
-- Project-specific systems.
-- Scenes.
-- Project assets.
-- Project configuration.
+The project module creates and destroys the concrete project implementation. The project uses engine functionality through the engine's public API.
 
-Projects:
-
-- implement the project interface.
-- provide project modules.
-- use engine functionality.
-- provide project-specific behaviour.
-
-Projects do not own engine systems.
+Projects do not own the engine's system implementations or lifecycle.
 
 ### Editor
 
-The editor is a separate application built using the engine.
+The editor is intended to be a separate application built using the engine.
 
-Responsibilities:
-
+Potential responsibilities include:
 - Scene editing.
 - Entity inspection.
 - Asset management.
-- Debug tooling.
+- Debug visualization.
 - Development workflows.
 
-The editor remains separate from runtime applications.
+Editor functionality remains separate from the runtime application.
 
 ### Tools
 
-Tools support development workflows.
+Tools support development workflows independently of the runtime.
 
-Examples:
-
+Examples include:
 - Asset processing.
 - Project generation.
 - Shader compilation.
 - Packaging.
 
-Tools are separate applications.
+## Dependencies and Relationships
 
-## Relationships
+In the following diagrams, an arrow means that the source depends on the destination. It does not, by itself, indicate ownership or execution order.
 
-The architecture uses diagrams with a consistent notation.
-
-Diagram rules:
-
-- Arrows (`->`) represent dependency direction.
-- The source depends on the destination.
-- Implementation relationships are shown separately using `implements`.
-- Creation/loading flow is described as a sequence, not as dependency arrows.
-
-### Dependency Relationship
+### Dependency Relationships
 
 ```text
 Runtime
@@ -372,176 +295,106 @@ Application
     +----------------+
     |                |
     v                v
-Project Loader     Engine
+Project Interface   Engine
+    ^
+    |
+Project Implementation
     |
     v
-Project Module
-    |
-    v
-Project Implementation
-
-
-Project Implementation
-        |
-        | implements
-        v
-
-Project Interface
+Engine
 ```
 
-The dependency relationships are:
+The project module implements the application-defined module interface, and the project implementation implements the project interface.
+
+At a high level:
 
 ```text
-Runtime
-    -> Application
-
-Application
-    -> Project Loader
-    -> Engine
-    -> Project Interface
-
-Project Loader
-    -> Project Module
-
-Project Module
-    -> Project Implementation
-
-Project Implementation
-    -> Engine
-    -> Project Interface
+Runtime -> Application
+Application -> Engine
+Application -> Project Interface
+Application -> Project Loader
+Project Loader -> Shared Library API
+Project Module -> Project Interface
+Project Implementation -> Project Interface
+Project Implementation -> Engine
 ```
+
+The concrete project module and implementation are built into the project's shared library. The application does not depend on a concrete project's target or class.
 
 ### Project Loading Flow
 
-The loading sequence is:
+This sequence describes runtime execution, not dependency direction:
 
 ```text
 Runtime starts Application
-
-Application
-    |
-    v
-
-Project Registry
-    |
-    v
-
-Available Projects
-
-Application selects a project
-
-Application
-    |
-    v
-
-Project Loader
-    |
-    v
-
-Project Module
-    |
-    v
-
-Project Implementation
+          |
+          v
+Application starts Engine
+          |
+          v
+Application discovers projects
+          |
+          v
+User selects a project
+          |
+          v
+Project Loader loads shared library
+          |
+          v
+Generic module entry point is called
+          |
+          v
+Module creates project instance
+          |
+          v
+Application runs project lifecycle
+          |
+          v
+Project is destroyed
+          |
+          v
+Module is destroyed
+          |
+          v
+Shared library is unloaded
 ```
 
-The loading flow describes execution order.
+### Lifecycle Coordination
 
-It does not represent ownership or dependency direction.
-
-### Project Usage Flow
+The application coordinates both engine and project lifecycles:
 
 ```text
-Project Implementation
-        |
-        | uses
-        v
-
-Engine
-        |
-        v
-
-Systems
+Application
+    |
+    +-- Start Engine
+    |
+    +-- Load Project
+    |
+    +-- Initialize Project
+    |
+    +-- Update Project
+    |
+    +-- Shut down Project
+    |
+    +-- Unload Project
+    |
+    +-- Stop Engine
 ```
 
-### Repository Ownership
+The engine owns its systems. The project module owns creation and destruction of the concrete project instance. The loaded-project owner keeps the module and its shared library alive for the duration of the project instance.
 
-The repository structure follows these responsibilities:
+## Architectural Rules
 
-```text
-engine/
+1. The engine does not depend on projects.
+2. The runtime starts the application and remains generic.
+3. The application owns application lifecycle coordination.
+4. The application defines the project and project-module interfaces.
+5. Projects implement those interfaces inside their own source code.
+6. The application discovers, selects, and loads projects without naming concrete project classes.
+7. Project modules create and destroy their project implementations.
+8. Projects use engine functionality through the engine's public API.
+9. The engine manages its own systems and their lifecycle.
+10. A project and its module must be destroyed before their shared library is unloaded.
+11. Editor and development tools remain separate from the runtime application.
 
-    Reusable engine functionality.
-
-    Contains:
-        core/
-        systems/
-        renderer/
-        physics/
-        audio/
-        ecs/
-        resources/
-        events/
-        scripting/
-
-application/
-
-    Application framework.
-
-    Contains:
-        Application
-        ProjectInterface
-
-runtime/
-
-    Executable entry point.
-
-projects/
-
-    Individual games and applications.
-
-editor/
-
-    Editor application.
-
-tools/
-
-    Development tools.
-
-assets/
-
-    Engine and project assets.
-
-tests/
-
-    Automated tests.
-
-docs/
-
-    Documentation.
-```
-
-### Architectural Rules
-
-Projects use engine functionality.
-
-The engine does not depend on projects.
-
-The important architectural rules are:
-
-- The engine is reusable.
-- Projects are replaceable.
-- Gameplay belongs to projects.
-- Engine functionality belongs to the engine.
-- Systems belong to the engine.
-- Systems provide reusable functionality.
-- Runtime remains generic.
-- Runtime starts the application.
-- Application owns the project boundary.
-- Application defines the project interface.
-- Projects implement the project interface.
-- Application discovers and loads projects.
-- Project modules create project implementations.
-- Projects use engine functionality.
-- Engine never depends on projects.
-- Editor functionality remains separate from runtime functionality.
+These boundaries allow projects to be added or replaced without introducing project-specific dependencies into the engine or runtime.

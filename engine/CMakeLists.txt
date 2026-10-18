@@ -5,7 +5,6 @@ target_sources(engine
     PRIVATE
 
     core/Engine.cpp
-    core/Application.cpp
     core/Time.cpp
     core/Log.cpp
 )
@@ -21,7 +20,7 @@ target_include_directories(engine
 
 target_compile_features(engine
     PUBLIC
-    cxx_std_20
+    cxx_std_23
 )
 
 

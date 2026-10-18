@@ -3,6 +3,7 @@
 #include "core/Engine.hpp"
 #include "Project.hpp"
 #include "ProjectLoader.hpp"
+#include "ProjectRegistry.hpp"
 
 #include <memory>
 
@@ -27,8 +28,10 @@ namespace App
 
         Engine::EngineCore engine;
 
+        ProjectRegistry projectRegistry;
+
         ProjectLoader projectLoader;
 
-        std::unique_ptr<Project> project;
+        std::unique_ptr<LoadedProject> project;
     };
 }

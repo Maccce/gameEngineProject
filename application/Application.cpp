@@ -36,15 +36,52 @@ namespace App
     void Application::initialize()
     {
         engine.initialize();
+        projectRegistry.discover("projects");
+
+        std::cout << "Available Projects\n\n";
+
+        std::size_t index = 1;
+
+        for (const auto& project : projectRegistry.available())
+        {
+            std::cout
+                << index++ << ". " << project.name << '\n'
+                << "   Description: " << project.description << '\n'
+                << "   Version: " << project.version << '\n'
+                << "   Path: " << project.path << "\n\n";
+        }
+
+        std::cout << "Select project: ";
+
+        std::size_t selection;
+        std::cin >> selection;
+
+        const auto& selectedProject = projectRegistry.project(selection - 1);
+
+        std::cout << "\nSelected: " << selectedProject.name << '\n';
+
         Engine::Time::initialize();
-        project = projectLoader.load();
-        project->onInitialize();
+
+        project = projectLoader.load(selectedProject);
+
+        if (!project)
+        {
+            stop();
+            return;
+        }
+
+        project->get()->onInitialize();
     }
 
     void Application::update()
     {
+        if (!project)
+        {
+            stop();
+            return;
+        }
         Engine::Time::update();
-        project->onUpdate();
+        project->get()->onUpdate();
         std::cout
             << "Frame delta: "
             << Engine::Time::deltaTime()
@@ -53,8 +90,12 @@ namespace App
 
     void Application::shutdown()
     {
-        project->onShutdown();
-        project.reset();
+        if (project)
+        {
+            project->get()->onShutdown();
+            project.reset();
+        }
+
         engine.shutdown();
     }
 

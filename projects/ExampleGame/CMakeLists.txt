@@ -1,5 +1,9 @@
 add_library(exampleGame SHARED)
 
+set_target_properties(exampleGame PROPERTIES
+    OUTPUT_NAME "ExampleGame"
+)
+
 target_sources(exampleGame
     PRIVATE
     src/Game.cpp
