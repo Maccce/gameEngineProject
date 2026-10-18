@@ -3,7 +3,9 @@
 #include "ProjectInfo.hpp"
 #include "SharedLibrary.hpp"
 #include "project_api.h"
+#include "core/Error.hpp"
 
+#include <expected>
 #include <memory>
 
 namespace App
@@ -27,23 +29,21 @@ namespace App
 
         AppProjectHandle* get() const;
 
-        void initialize();
-        void update(double deltaTime);
-        void shutdown();
+        std::expected<void, Engine::Error> initialize();
+        std::expected<void, Engine::Error> update(double deltaTime);
+        std::expected<void, Engine::Error> shutdown();
 
     private:
         SharedLibrary library;
         const AppProjectAPI* api;
         AppProjectHandle* project;
-
         bool initialized = false;
     };
 
     class ProjectLoader
     {
     public:
-        std::unique_ptr<LoadedProject> load(
-            const ProjectInfo& project
-        );
+        std::expected<std::unique_ptr<LoadedProject>, Engine::Error>
+        load(const ProjectInfo& project);
     };
 }

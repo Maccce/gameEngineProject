@@ -6,10 +6,10 @@ The engine is intended to support games, editor tooling, asset pipelines, script
 
 Development uses Docker and Visual Studio Code Dev Containers.
 
-**Supported development environments**
-- Windows 11 with WSL2
+**Development environments**
 - Linux
-- Docker-based CI
+- Windows 11 with WSL2
+- Docker-based development and CI
 
 Architecture details: [`docs/architecture.md`](docs/architecture.md)
 
@@ -256,8 +256,6 @@ Available Projects
 Select project: 1
 
 Selected: Example Game
-Loading project: Example Game
-Successfully created project instance.
 ExampleGame initialized
 ExampleGame update
 Frame delta: 0.100162
@@ -296,9 +294,10 @@ Implemented:
 - Project creation and destruction through the C-compatible API
 - Example project integration
 - Application, engine, and project lifecycle coordination
+- Project callback error reporting and propagation
+- Project-selection input validation
 
 Planned:
-- Robust project-selection and loading error handling
 - Runtime project switching
 - Input and event systems
 - Rendering and window integration
@@ -314,8 +313,11 @@ Planned:
 - [x] Project discovery
 - [x] Project selection
 - [x] Dynamic project module loading
+- [x] Project lifecycle coordination
+- [x] Project-selection input validation
+- [x] Project callback error propagation
+- [ ] Expanded error-path testing
 - [ ] Runtime project switching
-- [ ] Robust loading and selection error handling
 
 ### Core Engine
 - [x] Time system

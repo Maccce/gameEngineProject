@@ -1,12 +1,27 @@
-
 #include "SharedLibrary.hpp"
 
 #include <dlfcn.h>
-#include <iostream>
+
+#include <string>
 #include <utility>
 
 namespace App
 {
+    namespace
+    {
+        Engine::Error makeError(
+            Engine::ErrorCode code,
+            std::string message
+        )
+        {
+            return Engine::Error{
+                code,
+                std::move(message),
+                nullptr
+            };
+        }
+    }
+
     std::string SharedLibrary::getPlatformLibraryName(
         const std::string& name
     )
@@ -14,7 +29,9 @@ namespace App
         return "lib" + name + ".so";
     }
 
-    SharedLibrary::SharedLibrary(SharedLibrary&& other) noexcept
+    SharedLibrary::SharedLibrary(
+        SharedLibrary&& other
+    ) noexcept
         : handle(other.handle)
     {
         other.handle = nullptr;
@@ -26,7 +43,8 @@ namespace App
     {
         if (this != &other)
         {
-            unload();
+            // Move assignment cannot return a cleanup error.
+            cleanup();
 
             handle = other.handle;
             other.handle = nullptr;
@@ -35,64 +53,116 @@ namespace App
         return *this;
     }
 
-    bool SharedLibrary::load(const std::string& path)
+    std::expected<void, Engine::Error> SharedLibrary::load(
+        const std::string& path
+    )
     {
         if (handle)
         {
-            std::cerr << "A shared library is already loaded.\n";
-            return false;
+            return std::unexpected(makeError(
+                Engine::ErrorCode::InvalidState,
+                "A shared library is already loaded."
+            ));
         }
 
-        handle = dlopen(path.c_str(), RTLD_NOW);
+        // Clear any previous dynamic-loader error.
+        (void)dlerror();
 
-        if (!handle)
+        void* loadedHandle = dlopen(path.c_str(), RTLD_NOW);
+
+        if (!loadedHandle)
         {
-            std::cerr << "Failed to load shared library: "
-                      << dlerror() << '\n';
-            return false;
+            const char* error = dlerror();
+
+            return std::unexpected(makeError(
+                Engine::ErrorCode::IoError,
+                "Failed to load shared library '" + path + "': " +
+                    (error ? error : "Unknown dynamic loader error.")
+            ));
         }
 
-        return true;
+        handle = loadedHandle;
+        return {};
     }
 
-    void* SharedLibrary::getSymbol(const char* name) const
+    std::expected<void*, Engine::Error> SharedLibrary::getSymbol(
+        const char* name
+    ) const
     {
-        if (!handle)
+        if (!name || name[0] == '\0')
         {
-            return nullptr;
+            return std::unexpected(makeError(
+                Engine::ErrorCode::InvalidArgument,
+                "Symbol name must not be null or empty."
+            ));
         }
 
-        dlerror();
+        if (!handle)
+        {
+            return std::unexpected(makeError(
+                Engine::ErrorCode::InvalidState,
+                "Cannot look up a symbol without a loaded library."
+            ));
+        }
+
+        // POSIX requires checking dlerror(), rather than relying
+        // only on the pointer returned by dlsym().
+        (void)dlerror();
+
         void* symbol = dlsym(handle, name);
 
         if (const char* error = dlerror())
         {
-            std::cerr << "Failed to find symbol '" << name
-                      << "': " << error << '\n';
-            return nullptr;
+            return std::unexpected(makeError(
+                Engine::ErrorCode::NotFound,
+                "Failed to find symbol '" + std::string(name) +
+                    "': " + error
+            ));
         }
 
         return symbol;
     }
 
-
-    void SharedLibrary::unload()
+    void SharedLibrary::cleanup() noexcept
     {
-        if (handle)
-        {
-            if (dlclose(handle) != 0)
-            {
-                std::cerr << "Failed to unload shared library: "
-                        << dlerror() << '\n';
-            }
+        if (!handle)
+            return;
 
-            handle = nullptr;
-        }
+        void* handleToClose = handle;
+        handle = nullptr;
+
+        // Best-effort cleanup: this path cannot propagate errors.
+        (void)dlclose(handleToClose);
     }
 
+    std::expected<void, Engine::Error> SharedLibrary::unload()
+    {
+        if (!handle)
+        {
+            return {};
+        }
+
+        void* handleToClose = handle;
+        handle = nullptr;
+
+        if (dlclose(handleToClose) != 0)
+        {
+            const char* error = dlerror();
+
+            return std::unexpected(makeError(
+                Engine::ErrorCode::ExternalFailure,
+                "Failed to unload shared library: " +
+                    std::string(
+                        error ? error : "Unknown dynamic loader error."
+                    )
+            ));
+        }
+
+        return {};
+    }
 
     SharedLibrary::~SharedLibrary()
     {
-        unload();
+        cleanup();
     }
 }

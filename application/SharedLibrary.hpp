@@ -1,6 +1,8 @@
-
 #pragma once
 
+#include "core/Error.hpp"
+
+#include <expected>
 #include <string>
 
 namespace App
@@ -21,11 +23,19 @@ namespace App
             const std::string& name
         );
 
-        bool load(const std::string& path);
-        void* getSymbol(const char* name) const;
-        void unload();
+        std::expected<void, Engine::Error> load(
+            const std::string& path
+        );
+
+        std::expected<void*, Engine::Error> getSymbol(
+            const char* name
+        ) const;
+
+        std::expected<void, Engine::Error> unload();
 
     private:
+        void cleanup() noexcept;
+
         void* handle = nullptr;
     };
 }

@@ -77,17 +77,23 @@ The function table contains these operations:
 ```c
 AppProjectHandle* (*create_project)(void);
 
-void (*initialize_project)(AppProjectHandle* project);
+AppProjectStatus (*initialize_project)(
+    AppProjectHandle* project
+);
 
-void (*update_project)(
+AppProjectStatus (*update_project)(
     AppProjectHandle* project,
     double delta_time
 );
 
-void (*shutdown_project)(AppProjectHandle* project);
+AppProjectStatus (*shutdown_project)(
+    AppProjectHandle* project
+);
 
 void (*destroy_project)(AppProjectHandle* project);
 ```
+
+The initialization, update, and shutdown callbacks return APP_PROJECT_STATUS_SUCCESS on success or APP_PROJECT_STATUS_FAILURE on failure. Project creation returns NULL if an instance cannot be created. The application converts callback failures into engine errors and handles them through its application lifecycle.
 
 The project library defines the concrete `AppProjectHandle` type privately. The application treats it as opaque and interacts with it only through the API functions.
 
