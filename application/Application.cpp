@@ -6,7 +6,6 @@
 #include <iostream>
 #include <thread>
 
-
 namespace App
 {
     Application::Application()
@@ -16,19 +15,24 @@ namespace App
     int Application::run()
     {
         initialize();
+
         int frames = 0;
-        while(running)
+
+        while (running)
         {
             update();
             frames++;
-            if(frames > 10)
+
+            if (frames > 10)
             {
                 stop();
             }
+
             std::this_thread::sleep_for(
                 std::chrono::milliseconds(100)
             );
         }
+
         shutdown();
         return 0;
     }
@@ -51,12 +55,29 @@ namespace App
                 << "   Path: " << project.path << "\n\n";
         }
 
+        if (projectRegistry.available().empty())
+        {
+            std::cerr << "No projects available.\n";
+            stop();
+            return;
+        }
+
         std::cout << "Select project: ";
 
-        std::size_t selection;
+        std::size_t selection = 0;
         std::cin >> selection;
 
-        const auto& selectedProject = projectRegistry.project(selection - 1);
+        if (!std::cin
+            || selection == 0
+            || selection > projectRegistry.available().size())
+        {
+            std::cerr << "Invalid project selection.\n";
+            stop();
+            return;
+        }
+
+        const auto& selectedProject =
+            projectRegistry.project(selection - 1);
 
         std::cout << "\nSelected: " << selectedProject.name << '\n';
 
@@ -70,7 +91,7 @@ namespace App
             return;
         }
 
-        project->get()->onInitialize();
+        project->initialize();
     }
 
     void Application::update()
@@ -80,19 +101,22 @@ namespace App
             stop();
             return;
         }
+
         Engine::Time::update();
-        project->get()->onUpdate();
+
+        project->update(Engine::Time::deltaTime());
+
         std::cout
             << "Frame delta: "
             << Engine::Time::deltaTime()
-            << "\n";
+            << '\n';
     }
 
     void Application::shutdown()
     {
         if (project)
         {
-            project->get()->onShutdown();
+            project->shutdown();
             project.reset();
         }
 
@@ -103,5 +127,4 @@ namespace App
     {
         running = false;
     }
-
 }

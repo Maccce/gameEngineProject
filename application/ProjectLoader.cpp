@@ -7,34 +7,80 @@
 
 namespace App
 {
+    namespace
+    {
+        struct ProjectHandleGuard
+        {
+            const AppProjectAPI* api;
+            AppProjectHandle* project;
+
+            ~ProjectHandleGuard()
+            {
+                if (project && api && api->destroy_project)
+                    api->destroy_project(project);
+            }
+
+            void release()
+            {
+                project = nullptr;
+            }
+        };
+    }
+
     LoadedProject::LoadedProject(
         SharedLibrary library,
-        ProjectModule* module,
-        Project* project
+        const AppProjectAPI* api,
+        AppProjectHandle* project
     )
         : library(std::move(library)),
-          module(module),
+          api(api),
           project(project)
     {
     }
 
     LoadedProject::~LoadedProject()
     {
-        if (project)
+        shutdown();
+
+        if (project && api && api->destroy_project)
         {
-            module->destroyProject(project);
+            api->destroy_project(project);
             project = nullptr;
         }
 
-        delete module;
-        module = nullptr;
-
+        api = nullptr;
         library.unload();
     }
 
-    Project* LoadedProject::get() const
+    AppProjectHandle* LoadedProject::get() const
     {
         return project;
+    }
+
+    void LoadedProject::initialize()
+    {
+        if (!project || !api || initialized)
+            return;
+
+        api->initialize_project(project);
+        initialized = true;
+    }
+
+    void LoadedProject::update(double deltaTime)
+    {
+        if (!project || !api || !initialized)
+            return;
+
+        api->update_project(project, deltaTime);
+    }
+
+    void LoadedProject::shutdown()
+    {
+        if (!project || !api || !initialized)
+            return;
+
+        api->shutdown_project(project);
+        initialized = false;
     }
 
     std::unique_ptr<LoadedProject> ProjectLoader::load(
@@ -57,31 +103,40 @@ namespace App
             / libraryName;
 
         if (!library.load(libraryPath.string()))
-        {
             return nullptr;
-        }
 
-        using CreateProjectModule = ProjectModule* (*)();
-
-        auto createModule =
-            reinterpret_cast<CreateProjectModule>(
-                library.getSymbol("createProjectModule")
+        auto getProjectAPI =
+            reinterpret_cast<AppGetProjectAPI>(
+                library.getSymbol("getProjectAPI")
             );
 
-        if (!createModule)
+        if (!getProjectAPI)
         {
+            std::cerr << "Failed to find getProjectAPI symbol.\n";
             return nullptr;
         }
 
-        std::unique_ptr<ProjectModule> module(createModule());
+        const AppProjectAPI* api =
+            getProjectAPI(APP_PROJECT_API_VERSION);
 
-        if (!module)
+        if (!api)
         {
-            std::cerr << "Failed to create project module.\n";
+            std::cerr << "Project does not support this API version.\n";
             return nullptr;
         }
 
-        Project* createdProject = module->createProject();
+        if (api->api_version != APP_PROJECT_API_VERSION
+            || !api->create_project
+            || !api->initialize_project
+            || !api->update_project
+            || !api->shutdown_project
+            || !api->destroy_project)
+        {
+            std::cerr << "Project API is invalid or incomplete.\n";
+            return nullptr;
+        }
+
+        AppProjectHandle* createdProject = api->create_project();
 
         if (!createdProject)
         {
@@ -89,16 +144,17 @@ namespace App
             return nullptr;
         }
 
+        ProjectHandleGuard guard{api, createdProject};
+
         std::cout << "Successfully created project instance.\n";
 
         auto loadedProject = std::make_unique<LoadedProject>(
             std::move(library),
-            module.get(),
+            api,
             createdProject
         );
 
-        module.release();
-
+        guard.release();
         return loadedProject;
     }
 }

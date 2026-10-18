@@ -3,7 +3,6 @@ add_library(application)
 target_sources(application
     PRIVATE
     Application.cpp
-    Project.cpp
     ProjectLoader.cpp
     ProjectRegistry.cpp
     SharedLibraryLinux.cpp

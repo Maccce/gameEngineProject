@@ -1,16 +1,14 @@
 #pragma once
 
-#include "Project.hpp"
-
 namespace ExampleGame
 {
-    class Game : public App::Project
+    class Game
     {
     public:
-        void onInitialize() override;
+        void onInitialize();
 
-        void onUpdate() override;
+        void onUpdate();
 
-        void onShutdown() override;
+        void onShutdown();
     };
 }

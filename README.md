@@ -48,7 +48,7 @@ The project separates responsibilities across four main components:
 - **Runtime:** Starts the application and returns its exit code.
 - **Application:** Manages application lifecycle, project discovery, selection, loading, and project lifecycle coordination.
 - **Engine:** Provides reusable systems and manages their lifecycle.
-- **Projects:** Implement the project interface and provide project-specific behaviour.
+- **Projects**: Implement the C-compatible project API and provide project-specific behaviour.
 
 Projects are discovered through their `project.json` metadata. The application loads the selected project's shared library through a generic module entry point. The application does not depend on concrete project classes.
 
@@ -289,11 +289,11 @@ Implemented:
 - Engine initialization and shutdown
 - Time system
 - Logging foundation
-- Application framework and project interface
+- Application framework and C-compatible project API
 - Project metadata and registry
 - Project discovery and selection
 - Dynamic project module loading
-- Project creation and destruction through the module interface
+- Project creation and destruction through the C-compatible API
 - Example project integration
 - Application, engine, and project lifecycle coordination
 

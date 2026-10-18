@@ -6,17 +6,19 @@ set_target_properties(exampleGame PROPERTIES
 
 target_sources(exampleGame
     PRIVATE
-    src/Game.cpp
-    src/GameModule.cpp
+        src/Game.cpp
+        src/GameModule.cpp
 )
 
 target_include_directories(exampleGame
     PUBLIC
-    src
+        src
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/application
 )
 
 target_link_libraries(exampleGame
     PRIVATE
-    engine
-    application
+        engine
+        application
 )

@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Project.hpp"
 #include "ProjectInfo.hpp"
-#include "ProjectModule.hpp"
 #include "SharedLibrary.hpp"
+#include "project_api.h"
 
 #include <memory>
 
@@ -14,8 +13,8 @@ namespace App
     public:
         LoadedProject(
             SharedLibrary library,
-            ProjectModule* module,
-            Project* project
+            const AppProjectAPI* api,
+            AppProjectHandle* project
         );
 
         ~LoadedProject();
@@ -26,12 +25,18 @@ namespace App
         LoadedProject(LoadedProject&&) = delete;
         LoadedProject& operator=(LoadedProject&&) = delete;
 
-        Project* get() const;
+        AppProjectHandle* get() const;
+
+        void initialize();
+        void update(double deltaTime);
+        void shutdown();
 
     private:
         SharedLibrary library;
-        ProjectModule* module;
-        Project* project;
+        const AppProjectAPI* api;
+        AppProjectHandle* project;
+
+        bool initialized = false;
     };
 
     class ProjectLoader
