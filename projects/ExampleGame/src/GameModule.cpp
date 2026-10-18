@@ -1,3 +1,4 @@
+
 #include "Game.hpp"
 #include "project_api.h"
 
@@ -21,34 +22,70 @@ namespace ExampleGame
         }
     }
 
-    void initializeProject(AppProjectHandle* project)
+    AppProjectStatus initializeProject(AppProjectHandle* project)
     {
         if (!project)
-            return;
+            return APP_PROJECT_STATUS_FAILURE;
 
-        project->game.onInitialize();
+        try
+        {
+            project->game.onInitialize();
+            return APP_PROJECT_STATUS_SUCCESS;
+        }
+        catch (...)
+        {
+            return APP_PROJECT_STATUS_FAILURE;
+        }
     }
 
-    void updateProject(AppProjectHandle* project, double deltaTime)
+    AppProjectStatus updateProject(
+        AppProjectHandle* project,
+        double deltaTime
+    )
     {
         if (!project)
-            return;
+            return APP_PROJECT_STATUS_FAILURE;
 
-        (void)deltaTime;
-        project->game.onUpdate();
+        try
+        {
+            (void)deltaTime;
+            project->game.onUpdate();
+            return APP_PROJECT_STATUS_SUCCESS;
+        }
+        catch (...)
+        {
+            return APP_PROJECT_STATUS_FAILURE;
+        }
     }
 
-    void shutdownProject(AppProjectHandle* project)
+    AppProjectStatus shutdownProject(AppProjectHandle* project)
     {
         if (!project)
-            return;
+            return APP_PROJECT_STATUS_FAILURE;
 
-        project->game.onShutdown();
+        try
+        {
+            project->game.onShutdown();
+            return APP_PROJECT_STATUS_SUCCESS;
+        }
+        catch (...)
+        {
+            return APP_PROJECT_STATUS_FAILURE;
+        }
     }
 
     void destroyProject(AppProjectHandle* project)
     {
-        delete project;
+        // Destruction must not allow exceptions to escape the ABI.
+        try
+        {
+            delete project;
+        }
+        catch (...)
+        {
+            // Destructors should not throw. There is no error return
+            // available from this callback.
+        }
     }
 
     const AppProjectAPI api{

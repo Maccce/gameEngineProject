@@ -1,9 +1,11 @@
 #pragma once
 
 #include "core/Engine.hpp"
+#include "core/Error.hpp"
 #include "ProjectLoader.hpp"
 #include "ProjectRegistry.hpp"
 
+#include <expected>
 #include <memory>
 
 namespace App
@@ -18,9 +20,9 @@ namespace App
         void stop();
 
     private:
-        void initialize();
+        std::expected<void, Engine::Error> initialize();
         void shutdown();
-        void update();
+        std::expected<void, Engine::Error> update();
 
         bool running = true;
 
