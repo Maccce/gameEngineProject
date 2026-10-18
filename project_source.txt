@@ -1,0 +1,865 @@
+./engine/CMakeLists.txt
+
+===== ./engine/CMakeLists.txt =====
+add_library(engine STATIC)
+
+
+target_sources(engine
+    PRIVATE
+
+    core/Engine.cpp
+    core/Time.cpp
+    core/Log.cpp
+)
+
+
+target_include_directories(engine
+
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+
+)
+
+
+target_compile_features(engine
+    PUBLIC
+    cxx_std_23
+)
+
+
+target_link_libraries(engine
+
+    PUBLIC
+
+    spdlog::spdlog
+
+)
+
+enable_engine_warnings(engine)
+./engine/core/Engine.cpp
+
+===== ./engine/core/Engine.cpp =====
+#include "Engine.hpp"
+
+#include "Log.hpp"
+
+
+namespace Engine
+{
+
+EngineCore::EngineCore()
+{
+}
+
+
+void EngineCore::initialize()
+{
+    Log::info("Engine initialized");
+
+    running = true;
+}
+
+
+void EngineCore::shutdown()
+{
+    Log::info("Engine shutdown");
+
+    running = false;
+}
+
+bool EngineCore::isRunning() const
+{
+    return running;
+}
+
+}
+./engine/core/Log.cpp
+
+===== ./engine/core/Log.cpp =====
+#include "Log.hpp"
+
+#include <spdlog/spdlog.h>
+
+
+namespace Engine
+{
+
+bool Log::initialized = false;
+
+
+
+void Log::initialize()
+{
+    spdlog::set_pattern(
+        "[%l] %v"
+    );
+
+    initialized = true;
+
+    info("Logging initialized");
+}
+
+
+
+void Log::shutdown()
+{
+    info("Logging shutdown");
+
+    initialized = false;
+}
+
+
+
+void Log::info(const char* message)
+{
+    spdlog::info(message);
+}
+
+
+
+void Log::warn(const char* message)
+{
+    spdlog::warn(message);
+}
+
+
+
+void Log::error(const char* message)
+{
+    spdlog::error(message);
+}
+
+
+}
+./engine/core/Time.cpp
+
+===== ./engine/core/Time.cpp =====
+#include "Time.hpp"
+
+
+namespace Engine
+{
+
+
+std::chrono::high_resolution_clock::time_point Time::startTime;
+
+std::chrono::high_resolution_clock::time_point Time::lastFrame;
+
+
+float Time::deltaSeconds = 0.0f;
+
+float Time::totalSeconds = 0.0f;
+
+
+
+void Time::initialize()
+{
+    startTime =
+        std::chrono::high_resolution_clock::now();
+
+    lastFrame = startTime;
+}
+
+
+
+void Time::update()
+{
+    auto current =
+        std::chrono::high_resolution_clock::now();
+
+
+    deltaSeconds =
+        std::chrono::duration<float>(
+            current - lastFrame
+        ).count();
+
+
+    totalSeconds =
+        std::chrono::duration<float>(
+            current - startTime
+        ).count();
+
+
+    lastFrame = current;
+}
+
+
+
+float Time::deltaTime()
+{
+    return deltaSeconds;
+}
+
+
+
+float Time::totalTime()
+{
+    return totalSeconds;
+}
+
+
+}
+./engine/core/Engine.hpp
+
+===== ./engine/core/Engine.hpp =====
+#pragma once
+
+#include <string>
+
+
+namespace Engine
+{
+
+class EngineCore
+{
+public:
+
+    EngineCore();
+
+    void initialize();
+
+    void shutdown();
+
+    bool isRunning() const;
+
+
+private:
+
+    bool running = false;
+
+};
+
+}
+./engine/core/Time.hpp
+
+===== ./engine/core/Time.hpp =====
+#pragma once
+
+#include <chrono>
+
+
+namespace Engine
+{
+
+class Time
+{
+public:
+
+    static void initialize();
+
+    static void update();
+
+
+    static float deltaTime();
+
+    static float totalTime();
+
+
+private:
+
+    static std::chrono::high_resolution_clock::time_point startTime;
+
+    static std::chrono::high_resolution_clock::time_point lastFrame;
+
+
+    static float deltaSeconds;
+
+    static float totalSeconds;
+};
+
+}
+./engine/core/Log.hpp
+
+===== ./engine/core/Log.hpp =====
+#pragma once
+
+#include <memory>
+
+
+namespace Engine
+{
+
+class Log
+{
+
+public:
+
+    static void initialize();
+
+    static void shutdown();
+
+
+    static void info(const char* message);
+
+    static void warn(const char* message);
+
+    static void error(const char* message);
+
+
+private:
+
+    static bool initialized;
+
+};
+
+}
+./editor/CMakeLists.txt
+
+===== ./editor/CMakeLists.txt =====
+./editor/Editor.cpp
+
+===== ./editor/Editor.cpp =====
+./projects/CMakeLists.txt
+
+===== ./projects/CMakeLists.txt =====
+add_subdirectory(ExampleGame)
+./projects/ExampleGame/src/GameModule.cpp
+
+===== ./projects/ExampleGame/src/GameModule.cpp =====
+#include "GameModule.hpp"
+#include "Game.hpp"
+
+namespace ExampleGame
+{
+    App::Project* GameModule::createProject()
+    {
+        return new Game();
+    }
+
+    void GameModule::destroyProject(App::Project* project)
+    {
+        delete project;
+    }
+}
+./projects/ExampleGame/src/GameModule.hpp
+
+===== ./projects/ExampleGame/src/GameModule.hpp =====
+#pragma once
+#include "ProjectModule.hpp"
+
+namespace ExampleGame
+{
+    class GameModule : public App::ProjectModule
+    {
+    public:
+        App::Project* createProject() override;
+
+        void destroyProject(App::Project* project) override;
+    };
+}
+./projects/ExampleGame/src/Game.hpp
+
+===== ./projects/ExampleGame/src/Game.hpp =====
+#pragma once
+
+#include "Project.hpp"
+
+namespace ExampleGame
+{
+    class Game : public App::Project
+    {
+    public:
+        void onInitialize() override;
+
+        void onUpdate() override;
+
+        void onShutdown() override;
+    };
+}
+./projects/ExampleGame/src/Game.cpp
+
+===== ./projects/ExampleGame/src/Game.cpp =====
+#include "Game.hpp"
+
+#include <iostream>
+
+namespace ExampleGame
+{
+
+void Game::onInitialize()
+{
+    std::cout << "ExampleGame initialized\n";
+}
+
+
+void Game::onUpdate()
+{
+    std::cout << "ExampleGame update\n";
+}
+
+
+void Game::onShutdown()
+{
+    std::cout << "ExampleGame shutdown\n";
+}
+
+}
+./projects/ExampleGame/CMakeLists.txt
+
+===== ./projects/ExampleGame/CMakeLists.txt =====
+add_library(exampleGame SHARED)
+
+target_sources(exampleGame
+    PRIVATE
+    src/Game.cpp
+    src/GameModule.cpp
+)
+
+target_include_directories(exampleGame
+    PUBLIC
+    src
+)
+
+target_link_libraries(exampleGame
+    PRIVATE
+    engine
+    application
+)
+./CMakeLists.txt
+
+===== ./CMakeLists.txt =====
+cmake_minimum_required(VERSION 3.25)
+
+project(gameEngineProject
+    VERSION 0.1.0
+    LANGUAGES CXX
+)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+
+# Output directories
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
+    ${CMAKE_BINARY_DIR}/bin
+)
+
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY
+    ${CMAKE_BINARY_DIR}/lib
+)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
+    ${CMAKE_BINARY_DIR}/lib
+)
+
+
+# Compiler settings
+
+include(cmake/CompilerWarnings.cmake)
+
+
+# Dependencies
+
+include(cmake/Dependencies.cmake)
+
+# Engine
+
+add_subdirectory(engine)
+
+
+# Application framework
+
+add_subdirectory(application)
+
+
+# Projects
+
+add_subdirectory(projects)
+
+
+# Runtime
+
+add_subdirectory(runtime)
+
+
+# Tests later
+
+option(BUILD_TESTS "Build tests" OFF)
+
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+./runtime/CMakeLists.txt
+
+===== ./runtime/CMakeLists.txt =====
+add_executable(gameRuntime)
+
+target_sources(gameRuntime
+    PRIVATE
+    Runtime.cpp
+)
+
+target_link_libraries(gameRuntime
+    PRIVATE
+    engine
+    application
+)
+
+enable_engine_warnings(gameRuntime)
+./runtime/Runtime.cpp
+
+===== ./runtime/Runtime.cpp =====
+#include "Application.hpp"
+
+int main()
+{
+    App::Application application;
+
+    return application.run();
+}
+./tests/engine/ecs_tests.cpp
+
+===== ./tests/engine/ecs_tests.cpp =====
+./application/Project.hpp
+
+===== ./application/Project.hpp =====
+#pragma once
+
+namespace App
+{
+
+    class Project
+    {
+    public:
+        virtual ~Project() = default;
+        virtual void onInitialize();
+        virtual void onUpdate();
+        virtual void onShutdown();
+    };
+
+}
+./application/ProjectInfo.hpp
+
+===== ./application/ProjectInfo.hpp =====
+#pragma once
+#include <filesystem>
+#include <string>
+
+namespace App
+{
+struct ProjectInfo
+    {
+        std::string name;
+        std::string description;
+        std::string version;
+        std::filesystem::path path;
+    };
+}./application/CMakeLists.txt
+
+===== ./application/CMakeLists.txt =====
+add_library(application)
+
+target_sources(application
+    PRIVATE
+    Application.cpp
+    Project.cpp
+    ProjectLoader.cpp
+    ProjectRegistry.cpp
+)
+
+target_include_directories(application
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(application
+    PRIVATE
+    engine
+    nlohmann_json::nlohmann_json
+)
+./application/Application.cpp
+
+===== ./application/Application.cpp =====
+#include "Application.hpp"
+
+#include "core/Time.hpp"
+
+#include <chrono>
+#include <iostream>
+#include <thread>
+
+
+namespace App
+{
+    Application::Application()
+    {
+    }
+
+    int Application::run()
+    {
+        initialize();
+        int frames = 0;
+        while(running)
+        {
+            update();
+            frames++;
+            if(frames > 10)
+            {
+                stop();
+            }
+            std::this_thread::sleep_for(
+                std::chrono::milliseconds(100)
+            );
+        }
+        shutdown();
+        return 0;
+    }
+
+    void Application::initialize()
+    {
+        engine.initialize();
+        projectRegistry.discover("projects");
+
+        std::cout << "Available Projects\n\n";
+
+        std::size_t index = 1;
+
+        for (const auto& project : projectRegistry.available())
+        {
+            std::cout
+                << index++ << ". " << project.name << '\n'
+                << "   Description: " << project.description << '\n'
+                << "   Version: " << project.version << '\n'
+                << "   Path: " << project.path << "\n\n";
+        }
+
+        std::cout << "Select project: ";
+
+        std::size_t selection;
+        std::cin >> selection;
+
+        const auto& selectedProject = projectRegistry.project(selection - 1);
+
+        std::cout << "\nSelected: " << selectedProject.name << '\n';
+
+        Engine::Time::initialize();
+        project = projectLoader.load(selectedProject);
+        project->onInitialize();
+    }
+
+    void Application::update()
+    {
+        Engine::Time::update();
+        project->onUpdate();
+        std::cout
+            << "Frame delta: "
+            << Engine::Time::deltaTime()
+            << "\n";
+    }
+
+    void Application::shutdown()
+    {
+        project->onShutdown();
+        project.reset();
+        engine.shutdown();
+    }
+
+    void Application::stop()
+    {
+        running = false;
+    }
+
+}
+./application/ProjectRegistry.cpp
+
+===== ./application/ProjectRegistry.cpp =====
+#include "ProjectRegistry.hpp"
+
+#include <fstream>
+#include <stdexcept>
+
+#include <nlohmann/json.hpp>
+
+namespace App
+{
+    void ProjectRegistry::discover(
+        const std::filesystem::path& projectsDirectory
+    )
+    {
+        projects.clear();
+        for (const auto& entry : std::filesystem::directory_iterator(projectsDirectory))
+        {
+            if (!entry.is_directory())
+            {
+                continue;
+            }
+            const auto metadata = entry.path() / "project.json";
+            if (!std::filesystem::exists(metadata))
+            {
+                continue;
+            }
+            projects.push_back(
+                readProject(entry.path())
+            );
+        }
+    }
+
+    ProjectInfo ProjectRegistry::readProject(
+        const std::filesystem::path& directory
+    ) const
+    {
+        std::ifstream file(directory / "project.json");
+        nlohmann::json json;
+        file >> json;
+        ProjectInfo info;
+        info.name = json["name"];
+        info.description = json["description"];
+        info.version = json["version"];
+        info.path = directory;
+        return info;
+    }
+
+    const std::vector<ProjectInfo>& ProjectRegistry::available() const
+    {
+        return projects;
+    }
+
+    const ProjectInfo& ProjectRegistry::project(
+        std::size_t index
+    ) const
+    {
+        if (index >= projects.size())
+        {
+            throw std::out_of_range(
+                "Invalid project index."
+            );
+        }
+        return projects[index];
+    }
+}./application/Application.hpp
+
+===== ./application/Application.hpp =====
+#pragma once
+
+#include "core/Engine.hpp"
+#include "Project.hpp"
+#include "ProjectLoader.hpp"
+#include "ProjectRegistry.hpp"
+
+#include <memory>
+
+namespace App
+{
+    class Application
+    {
+    public:
+        Application();
+
+        int run();
+
+        void stop();
+
+    private:
+        void initialize();
+        void shutdown();
+
+        void update();
+
+        bool running = true;
+
+        Engine::EngineCore engine;
+
+        ProjectRegistry projectRegistry;
+
+        ProjectLoader projectLoader;
+
+        std::unique_ptr<Project> project;
+    };
+}
+./application/ProjectModule.hpp
+
+===== ./application/ProjectModule.hpp =====
+#pragma once
+#include "Project.hpp"
+
+namespace App
+{
+class ProjectModule
+    {
+    public:
+        virtual ~ProjectModule() = default;
+        virtual Project* createProject() = 0;
+        virtual void destroyProject(Project* project) = 0;
+    };
+}./application/Project.cpp
+
+===== ./application/Project.cpp =====
+#include "Project.hpp"
+
+namespace App
+{
+
+    void Project::onInitialize()
+    {
+    }
+
+    void Project::onUpdate()
+    {
+    }
+
+    void Project::onShutdown()
+    {
+    }
+
+}
+./application/ProjectLoader.cpp
+
+===== ./application/ProjectLoader.cpp =====
+#include "ProjectLoader.hpp"
+
+namespace App
+{
+    std::unique_ptr<Project> ProjectLoader::load()
+    {
+        return nullptr;
+    }
+}./application/ProjectLoader.hpp
+
+===== ./application/ProjectLoader.hpp =====
+#pragma once
+
+#include "Project.hpp"
+#include "ProjectModule.hpp"
+
+#include <memory>
+
+namespace App
+{
+    class ProjectLoader
+    {
+    public:
+        std::unique_ptr<Project> load();
+
+    private:
+        std::unique_ptr<ProjectModule> module;
+    };
+}
+./application/ProjectRegistry.hpp
+
+===== ./application/ProjectRegistry.hpp =====
+#pragma once
+#include "ProjectInfo.hpp"
+#include <cstddef>
+#include <filesystem>
+#include <vector>
+
+namespace App
+{
+class ProjectRegistry
+    {
+    public:
+        void discover(const std::filesystem::path& projectsDirectory);
+        const std::vector<ProjectInfo>& available() const;
+        const ProjectInfo& project(std::size_t index) const;
+
+    private:
+        ProjectInfo readProject(
+            const std::filesystem::path& directory
+        ) const;
+        std::vector<ProjectInfo> projects;
+    };
+}

@@ -1,87 +1,70 @@
 # gameEngineProject
 
-A custom C++23 2D game engine built from the ground up with a focus on modular architecture, reusable engine systems, modern C++ practices, and reproducible development environments.
+A custom C++23 2D game engine focused on modular architecture, reusable engine systems, modern C++, and reproducible development environments.
 
-The goal is to create a reusable engine foundation capable of supporting:
+The engine is intended to support games, editor tooling, asset pipelines, scripting, and cross-platform builds.
 
-- 2D games
-- editor tooling
-- asset pipelines
-- scripting
-- cross-platform builds
+Development uses Docker and Visual Studio Code Dev Containers.
 
-The project uses a Docker-based development environment to provide consistent builds across machines.
-
-Supported development environments:
-
-- Windows 11 + WSL2
+**Supported development environments**
+- Windows 11 with WSL2
 - Linux
-- Docker-based CI environments
+- Docker-based CI
 
-Detailed architecture documentation:
-
-```
-docs/architecture.md
-```
+Architecture details: [`docs/architecture.md`](docs/architecture.md)
 
 ## Project Goals
 
-The engine is designed around these principles:
-
-### Modular architecture
-
-Engine systems are separated into independent modules that can evolve without tightly coupling the entire codebase.
-
-### Separation between engine and projects
-
-Projects use the engine as a reusable foundation rather than containing engine-specific implementation.
-
-### Modern C++ practices
-
-The project uses:
-
-- C++23
-- CMake
-- Ninja
-- vcpkg
-
-### Reproducible builds
-
-The development environment is containerized so developers and CI systems use the same dependencies.
+- **Modular architecture:** Keep engine functionality separated into reusable systems.
+- **Engine/project separation:** Projects use the engine without embedding engine implementation.
+- **Modern C++:** Use C++23, CMake, Ninja, and vcpkg.
+- **Reproducible builds:** Use a consistent containerized development environment.
 
 ## Repository Structure
 
 ```text
 gameEngineProject/
-
-├── engine/ Core engine functionality
-├── application/ Application framework, project discovery, and project loading
-├── runtime/ Executable entry point
-├── projects/ Games and applications using the engine
-├── editor/ Editor application
-├── tools/ Development and asset pipeline tools
-├── assets/ Engine and project assets
-├── shaders/ GPU shader programs
-├── tests/ Automated tests
-├── scripts/ Development scripts
-├── cmake/ CMake modules and configuration
-├── docker/ Docker configuration
-├── .devcontainer/ VS Code Dev Container configuration
-├── docs/ Documentation
-└── .github/ GitHub Actions workflows
+├── engine/          Reusable engine functionality and systems
+├── application/     Application lifecycle and project management
+├── runtime/         Generic executable entry point
+├── projects/        Games and applications using the engine
+├── editor/          Editor application
+├── tools/           Development and asset pipeline tools
+├── assets/          Engine and project assets
+├── shaders/         GPU shader programs
+├── tests/           Automated tests
+├── scripts/         Development scripts
+├── cmake/           CMake modules and configuration
+├── docker/          Docker configuration
+├── .devcontainer/   VS Code Dev Container configuration
+├── docs/            Documentation
+└── .github/         GitHub Actions workflows
 ```
 
-For architecture decisions and ownership rules, see:
+## Architecture Overview
 
-```text
-docs/architecture.md
-```
+The project separates responsibilities across four main components:
+
+- **Runtime:** Starts the application and returns its exit code.
+- **Application:** Manages application lifecycle, project discovery, selection, loading, and project lifecycle coordination.
+- **Engine:** Provides reusable systems and manages their lifecycle.
+- **Projects**: Implement the C-compatible project API and provide project-specific behaviour.
+
+Projects are discovered through their `project.json` metadata. The application loads the selected project's shared library through a generic module entry point. The application does not depend on concrete project classes.
+
+See [`docs/architecture.md`](docs/architecture.md) for ownership rules and dependency relationships.
 
 ## Editor
 
-The editor contains engine development tools.
+The editor is intended to be a separate application built using the engine.
 
-Current structure:
+Planned functionality:
+- Scene editing
+- Entity inspection
+- Asset management
+- Debug tooling
+
+The editor structure may include:
 
 ```text
 editor/
@@ -90,16 +73,16 @@ editor/
 └── windows/
 ```
 
-Planned functionality:
-
-- Scene editing
-- Entity inspection
-- Asset management
-- Debug tooling
-
 ## Tools
 
-Development tools are located in:
+Development tools support workflows such as:
+
+- Asset processing
+- Project generation
+- Shader compilation
+- Packaging
+
+Planned structure:
 
 ```text
 tools/
@@ -108,15 +91,9 @@ tools/
 └── shader_compiler/
 ```
 
-These tools support:
-
-- Asset processing
-- Project creation
-- Shader workflows
-
 ## Assets
 
-Assets are separated into source and processed data:
+Source assets and processed runtime data are kept separate:
 
 ```text
 assets/
@@ -124,74 +101,42 @@ assets/
 └── cooked/
 ```
 
-The goal is to keep source assets separate from runtime-ready assets.
-
 ## Development Environment
 
-The project uses a Docker-based development environment through Visual Studio Code Dev Containers.
+The development environment uses Docker through Visual Studio Code Dev Containers.
 
 The container provides:
-
 - Ubuntu 24.04
-- GCC compiler toolchain
+- GCC
 - CMake
 - Ninja
 - Python
 - vcpkg
 - Required build dependencies
 
-The same container image is used for:
+The same environment is intended for local development and CI builds. A local C++ toolchain, CMake, Ninja, or vcpkg installation is not required on the host.
 
-- Local development through VS Code Dev Containers
-- Automated CI builds
-
-No local C++ compiler, CMake, Ninja, or vcpkg installation is required.
-
-## Requirements
-
-Install on the host machine:
+### Host Requirements
 
 - Docker
 - Docker Compose
 - Visual Studio Code
 - Dev Containers extension
 - Git
-- GitHub SSH key
-- SSH agent configured on the host machine
+- GitHub SSH key and configured SSH agent
 
-## Opening the Development Container
+### Open the Development Container
 
-All build commands should be executed inside the container terminal.
-
-1. Start the GitHub SSH agent inside a terminal outside VS Code.
-
-2. Open the repository in VS Code from the same terminal.
-
-3. Open the command palette:
-
-```text
-Ctrl + Shift + P
-```
-
-4. Select:
-
-```text
-Dev Containers: Rebuild and Reopen in Container
-```
+1. Start the GitHub SSH agent on the host.
+2. Open the repository in VS Code from the same environment.
+3. Open the command palette with `Ctrl + Shift + P`.
+4. Select **Dev Containers: Rebuild and Reopen in Container**.
 
 ## GitHub SSH Setup
 
-The development container uses SSH agent forwarding.
+The container uses SSH agent forwarding. The private key remains on the host; the container accesses the running agent instead of receiving a copy of the key.
 
-The SSH private key remains on the host machine and is never copied into the container.
-
-The container only receives access to the running SSH agent socket.
-
-### SSH agent
-
-On the host machine:
-
-1. Create an SSH key if needed:
+1. On the host, create a key if needed:
 
     ```bash
     ssh-keygen -t ed25519 -C "your-email@example.com"
@@ -221,19 +166,15 @@ On the host machine:
     ln -s $SSH_AUTH_SOCK ~/.ssh/agent.sock
     ```
 
-6. Verify:
+6. Verify the agent:
 
     ```bash
     ssh-add -l
     ```
 
-7. Copy your public key (Only needed to do this first time):
+7. Add the public key to **GitHub → Settings → SSH and GPG keys** if you have not already done so.
 
-    ```
-    GitHub → Settings → SSH and GPG keys
-    ```
-
-8. Test:
+8. Test authentication on the host and inside the container:
 
     ```bash
     ssh -T git@github.com
@@ -244,23 +185,9 @@ On the host machine:
     Hi <username>! You've successfully authenticated, but GitHub does not provide shell access.
     ```
 
-### Using Git inside the container
+## Verify the Development Environment
 
-After opening the Dev Container:
-
-Test authentication:
-
-```bash
-ssh -T git@github.com
-```
-
-Then use Git normally.
-
-## Verify Development Environment
-
-Inside the Dev Container terminal:
-
-Check compiler:
+Run these commands inside the Dev Container:
 
 ```bash
 g++ --version
@@ -290,15 +217,15 @@ Check GitHub authentication:
 ssh -T git@github.com
 ```
 
-## Building
+## Building and Running
 
-All commands are run inside the container.
+All build commands should be executed inside the container from the repository root.
 
 ### Configure
 
 ```bash
 cmake -S . -B build -G Ninja \
-    -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+    -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
 ```
 
 ### Build
@@ -313,23 +240,30 @@ cmake --build build
 ./build/bin/gameRuntime
 ```
 
-Expected output:
+The application discovers available projects, displays their metadata, and prompts for a selection. Choose a listed project to load and run it.
+
+Example output (frame timing and log timestamps vary):
 
 ```text
-[info] Logging initialized
-
+[info] Engine initialized
 Available Projects
 
 1. Example Game
    Description: An example game project.
    Version: 0.1.0
-   Path: projects/ExampleGame
+   Path: "projects/ExampleGame"
 
 Select project: 1
 
 Selected: Example Game
-
-[info] Logging shutdown
+Loading project: Example Game
+Successfully created project instance.
+ExampleGame initialized
+ExampleGame update
+Frame delta: 0.100162
+...
+ExampleGame shutdown
+[info] Engine shutdown
 ```
 
 ## Dependencies
@@ -338,83 +272,83 @@ Dependencies are managed through vcpkg.
 
 Current and planned dependencies include:
 
-- SDL3 - windowing and input
-- bgfx - rendering abstraction
-- EnTT - entity component system
-- pybind11 - Python integration
-- Box2D - physics
-- Dear ImGui - editor interface
+- SDL3 — windowing and input
+- bgfx — rendering abstraction
+- EnTT — entity component system
+- pybind11 — Python integration
+- Box2D — physics
+- Dear ImGui — editor interface
 
 ## Current Status
 
-Completed:
-
-- Initial repository structure
-- Docker development environment
-- VS Code Dev Container setup
-- CMake build system
-- C++23 configuration
-- Engine static library
-- Runtime executable
+Implemented:
+- Initial repository and development-container setup
+- CMake and C++23 configuration
 - vcpkg integration
-- Modular engine layout
-- Editor structure
-- Tool structure
-- Test structure
-- Application framework
-- Project interface
-- Project metadata system
-- Project registry for discovering available projects
-- Project selection workflow
-- Project loader architecture
+- Engine static library and runtime executable
+- Engine initialization and shutdown
+- Time system
+- Logging foundation
+- Application framework and C-compatible project API
+- Project metadata and registry
+- Project discovery and selection
+- Dynamic project module loading
+- Project creation and destruction through the C-compatible API
 - Example project integration
-- Application-to-project lifecycle flow
+- Application, engine, and project lifecycle coordination
+
+Planned:
+- Robust project-selection and loading error handling
+- Runtime project switching
+- Input and event systems
+- Rendering and window integration
+- ECS and scene systems
+- Physics and animation
+- Editor functionality
+- Asset processing and packaging tools
+- Automated tests
 
 ## Roadmap
 
 ### Application
-
 - [x] Project discovery
 - [x] Project selection
-- [ ] Dynamic project module loading
+- [x] Dynamic project module loading
 - [ ] Runtime project switching
+- [ ] Robust loading and selection error handling
 
 ### Core Engine
-
-- [ ] Time system
+- [x] Time system
+- [x] Initial logging support
 - [ ] Logging improvements
 - [ ] Event system
 - [ ] Input handling
 
 ### Rendering
-
 - [ ] SDL3 integration
 - [ ] bgfx integration
 - [ ] Sprite rendering
 - [ ] Camera system
 
 ### Gameplay Systems
-
 - [ ] ECS integration
 - [ ] Scene system
 - [ ] Physics
 - [ ] Animation
 
 ### Editor
-
 - [ ] Scene editor
 - [ ] Asset browser
 - [ ] Entity inspector
 - [ ] Debug visualization
 
 ### Tools
-
-- [ ] Improved asset pipeline
+- [ ] Asset pipeline improvements
 - [ ] Hot reload workflow
 - [ ] Packaging tools
 
 ## License
 
-This project license has not yet been finalized.
+The project license has not yet been finalized.
 
 Third-party dependencies retain their respective licenses.
